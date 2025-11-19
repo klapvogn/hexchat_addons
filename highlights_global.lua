@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 --
 -- If someone hilights you on any giving iRCD server you are on, it will display it in the current window/channel you are currently viewing
--- AUTHOR : piratpall
+-- AUTHOR : piratpalle
 --
 hexchat.register('Highlights', '1', 'Prints highlights to currently focused tab')
 
@@ -88,3 +88,4 @@ hexchat.hook_print('Private Action', function(args)
     print_to_current_buffer(server, 'private', nick, args[2] or '', true, true)
     return hexchat.EAT_NONE
 end)
+
