@@ -1,4 +1,7 @@
 -- SPDX-License-Identifier: MIT
+--
+-- If someone hilights you on any giving iRCD server you are on, it will display it in the current window/channel you are currently viewing
+--
 hexchat.register('Highlights', '1', 'Prints highlights to currently focused tab')
 
 local current_focused_context = hexchat.get_context()
@@ -51,7 +54,8 @@ end
 hexchat.hook_print('Channel Msg Hilight', function(args)
     local server = hexchat.get_info('server') or 'Unknown'
     local channel = hexchat.get_info('channel') or 'Unknown'
-    local nick = args[4] or hexchat.get_info('nick') or 'Unknown'
+    -- For Channel Msg Hilight, args[1] is the nick
+    local nick = args[1] or 'Unknown'
     
     print_to_current_buffer(server, channel, nick, args[2] or '', false, false)
     return hexchat.EAT_NONE
@@ -60,7 +64,8 @@ end)
 hexchat.hook_print('Channel Action Hilight', function(args)
     local server = hexchat.get_info('server') or 'Unknown'
     local channel = hexchat.get_info('channel') or 'Unknown'
-    local nick = args[4] or hexchat.get_info('nick') or 'Unknown'
+    -- For Channel Action Hilight, args[1] is the nick
+    local nick = args[1] or 'Unknown'
     
     print_to_current_buffer(server, channel, nick, args[2] or '', true, false)
     return hexchat.EAT_NONE
