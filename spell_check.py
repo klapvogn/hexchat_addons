@@ -6,6 +6,7 @@ from collections import deque
 __module_name__ = "AutoCorrect"
 __module_version__ = "1.7"
 __module_description__ = "Spell checker with tab completion - Fixed word boundary tracking"
+__author__ = 'Klapvogn'
 
 # Basic English word list
 WORD_LIST = {
@@ -414,4 +415,5 @@ class AutoCorrect:
         return hexchat.EAT_ALL
 
 # Start the plugin
+
 autocorrect = AutoCorrect()
