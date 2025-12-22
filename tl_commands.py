@@ -41,6 +41,25 @@ def hi_cmd(word, word_eol, userdata):
 # Register both commands
 hexchat.hook_command("hi", hi_cmd, help="/hi <username> - Welcome message")
 
+#------
+# Idler
+#------
+def idle_cmd(word, word_eol, userdata):
+    if len(word) < 2:
+        hexchat.command("say Usage: /idle <username>")
+        return hexchat.EAT_ALL
+    
+    username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces
+    
+    # Send the formatted welcome message
+    response = f"Please speak up {username}, if you need assistance. Idling is not allowed in this channel to respect the privacy of other users."
+    
+    hexchat.command(f"say {response}")
+    return hexchat.EAT_ALL
+
+# Register both commands
+hexchat.hook_command("idle", idle_cmd, help="/idle <username> - Idler message")
+
 #---------
 # New User
 #---------
@@ -123,9 +142,24 @@ def fl_cmd(word, word_eol, userdata):
     # word_eol[1] includes everything after the command, which adds spaces
     username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces  
 
-    response = f"{username}, You need to download our FREELEECH torrents you can find here: https://www.torrentleech.org/torrents/browse/index/facets/tags%3AFREELEECH_added%3A%255BNOW%252FMINUTE-10MINUTES%2520TO%2520NOW%252FMINUTE%252B1MINUTE%255D | keep in mind that these torrents also needs to be seeded as long as your user class tells you to! | Read more here: http://wiki.torrentleech.org/doku.php/user_classes"
-    
-    hexchat.command(f"say {response}")
+    line1 = (
+        f"{username}, You need to download our FREELEECH torrents you can find here: https://www.torrentleech.org/torrents/browse/index/facets/tags%3AFREELEECH_added%3A%255BNOW%252FMINUTE-10MINUTES%2520TO%2520NOW%252FMINUTE%252B1MINUTE%255D | keep in mind that these torrents also needs to be seeded as long as your user class tells you to! | Read more here: http://wiki.torrentleech.org/doku.php/user_classes"
+    )
+    line2 = (
+        "1.: \"popular torrent\" is not what you think it means. For example A torrent can be \"popular\" in terms of times downloaded, but if you download it after most people already have it, you will not get any upload from it. You want to grab a torrent with in 10 minutes after upload, ideally "
+    )
+    line3 = (
+        "2.: For that reason, many people use autobrr, you might want to look into that: https://wiki.torrentleech.org/doku.php/autobrr - more about Autobrr here: https://autobrr.com "
+    )
+    line4 = (
+        "3.: For that same reason, the freeleech link I posted earlier show only FL torrents uploaded to the site in the past 10 minutes. If it is empty, none have been uploaded in the past 10 minutes."
+    )
+
+    hexchat.command(f"say {line1}")
+    hexchat.command(f"say {line2}")
+    hexchat.command(f"say {line3}")
+    hexchat.command(f"say {line4}")
+
     return hexchat.EAT_ALL
 
 # Register the command
@@ -200,4 +234,50 @@ def irc_cmd(word, word_eol, userdata):
 # Register the command
 hexchat.hook_command("irc", irc_cmd, help="/irc <username> - Shows TL iRC Guides")    
 
+#------
+# Slots
+#------
+def slots_cmd(word, word_eol, userdata):
+    if len(word) < 2:
+        hexchat.command("say Usage: /slots <username>")
+        return hexchat.EAT_ALL
+    
+    username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces
+    response = f"{username}, Read more here on how slots works: https://wiki.torrentleech.org/doku.php/slots"
 
+    hexchat.command(f"say {response}")
+    return hexchat.EAT_ALL
+
+hexchat.hook_command("slots", slots_cmd, help="/slots <username> - slots link")
+
+#----
+# HnR
+#----
+def hnr_cmd(word, word_eol, userdata):
+    if len(word) < 2:
+        hexchat.command("say Usage: /hnr <username>")
+        return hexchat.EAT_ALL
+    
+    username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces
+    response = f"{username}, Read more here on how HnR works: https://wiki.torrentleech.org/doku.php/hnr"
+
+    hexchat.command(f"say {response}")
+    return hexchat.EAT_ALL
+
+hexchat.hook_command("hnr", hnr_cmd, help="/hnr <username> - hnr link")
+
+#-----------------------
+# User class and seeding
+#-----------------------
+def class_cmd(word, word_eol, userdata):
+    if len(word) < 2:
+        hexchat.command("say Usage: /class <username>")
+        return hexchat.EAT_ALL
+    
+    username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces
+    response = f"{username}, Read more here on how User classes works: http://wiki.torrentleech.org/doku.php/user_classes"
+
+    hexchat.command(f"say {response}")
+    return hexchat.EAT_ALL
+
+hexchat.hook_command("class", class_cmd, help="/class <username> - user class link")
