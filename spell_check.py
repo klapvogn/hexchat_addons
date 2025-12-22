@@ -218,12 +218,17 @@ class SystemSpellChecker:
             dict_file = os.path.join(config_dir, "autocorrect_dict.txt")
             
             if os.path.exists(dict_file):
+                word_count = 0
                 with open(dict_file, 'r', encoding='utf-8') as f:
                     for line in f:
                         word = line.strip().lower()
                         if word and len(word) > 1:
                             self.personal_dict.add(word)
                             self.wordlist.add(word)
+                            word_count += 1
+                
+                if word_count > 0:
+                    hexchat.prnt(f"\00303Loaded {word_count} words from personal dictionary")
         except:
             pass
     
