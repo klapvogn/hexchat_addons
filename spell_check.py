@@ -98,13 +98,15 @@ class SystemSpellChecker:
         # Check if we have a local dictionary file
         if os.path.exists(local_dict):
             try:
+                word_count = 0
                 with open(local_dict, 'r', encoding='utf-8', errors='ignore') as f:
                     for line in f:
                         word = line.strip().lower()
                         if word and len(word) > 1 and word.isalpha():
                             self.wordlist.add(word)
+                            word_count += 1
                 
-                hexchat.prnt(f"\00303Loaded {len(self.wordlist)} words from local dictionary")
+                hexchat.prnt(f"\00303Loaded {word_count} words from local dictionary")
                 return True
             except Exception as e:
                 hexchat.prnt(f"\00304Error loading local dictionary: {e}")
@@ -128,6 +130,7 @@ class SystemSpellChecker:
         for dict_path in dictionary_paths:
             if os.path.exists(dict_path):
                 try:
+                    word_count = 0
                     with open(dict_path, 'r', encoding='utf-8', errors='ignore') as f:
                         for line in f:
                             word = line.strip().lower()
@@ -137,15 +140,16 @@ class SystemSpellChecker:
                                 word = word.split('/')[0]
                                 if word.isalpha():
                                     self.wordlist.add(word)
+                                    word_count += 1
                     
-                    hexchat.prnt(f"\00303Loaded {len(self.wordlist)} words from {dict_path}")
+                    hexchat.prnt(f"\00303Loaded {word_count} words from {os.path.basename(dict_path)}")
                     
                     # Save to local cache for faster loading next time
                     try:
                         with open(local_dict, 'w', encoding='utf-8') as f:
                             for word in sorted(self.wordlist):
                                 f.write(word + "\n")
-                        hexchat.prnt(f"\00303Cached dictionary to {local_dict}")
+                        hexchat.prnt(f"\00303Cached dictionary to {os.path.basename(local_dict)}")
                     except:
                         pass
                     
@@ -577,6 +581,8 @@ class AutoCorrect:
             hexchat.prnt("  \00307/addword <word>\00303 - Add word to personal dictionary")
             hexchat.prnt("  \00307/aspell enable|disable\00303 - Toggle spell checking")
             hexchat.prnt("  \00307/aspell status\00303 - Show current status")
+            hexchat.prnt("  \00307/aspell path\00303 - Show dictionary file location")
+            hexchat.prnt("  \00307/aspell reload\00303 - Reload dictionary from disk")
             hexchat.prnt("  \00307/aspell help\00303 - Show this help")
             hexchat.prnt("\00303How to use:")
             hexchat.prnt("  1. Type normally - suggestions appear automatically")
@@ -584,6 +590,49 @@ class AutoCorrect:
             hexchat.prnt("     \00307TAB\00303 - Cycle through different suggestions")
             hexchat.prnt("     \00307SPACE\00303 - Accept current suggestion and add space")
             hexchat.prnt("     \00307ESC\00303 - Cancel and keep your spelling")
+            return hexchat.EAT_ALL
+        
+        elif words[1].lower() == "path":
+            config_dir = hexchat.get_info("configdir")
+            local_dict = os.path.join(config_dir, "english_words.txt")
+            personal_dict = os.path.join(config_dir, "autocorrect_dict.txt")
+            
+            hexchat.prnt("\00303Dictionary file locations:")
+            hexchat.prnt(f"\00307Main dictionary: {local_dict}")
+            hexchat.prnt(f"\00307Personal dictionary: {personal_dict}")
+            
+            if os.path.exists(local_dict):
+                size = os.path.getsize(local_dict) / 1024  # KB
+                hexchat.prnt(f"\00303Main dictionary exists ({size:.1f} KB)")
+            else:
+                hexchat.prnt("\00304Main dictionary not found")
+            
+            if os.path.exists(personal_dict):
+                hexchat.prnt(f"\00303Personal dictionary exists")
+            else:
+                hexchat.prnt("\00307Personal dictionary not created yet")
+            
+            return hexchat.EAT_ALL
+        
+        elif words[1].lower() == "reload":
+            hexchat.prnt("\00307Reloading dictionary...")
+            
+            # Clear current wordlist
+            old_count = len(self.spell.wordlist)
+            self.spell.wordlist.clear()
+            
+            # Reload system dictionary
+            if self.spell.use_aspell:
+                hexchat.prnt("\00303Using aspell (no reload needed)")
+            else:
+                self.spell.load_system_dictionary()
+            
+            # Reload personal dictionary
+            self.spell.load_personal_dictionary()
+            
+            new_count = len(self.spell.wordlist)
+            hexchat.prnt(f"\00303Dictionary reloaded: {old_count} → {new_count} words")
+            
             return hexchat.EAT_ALL
         
         elif words[1].lower() == "enable":
