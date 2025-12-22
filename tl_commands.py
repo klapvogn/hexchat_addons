@@ -149,7 +149,7 @@ def fl_cmd(word, word_eol, userdata):
         "1.: \"popular torrent\" is not what you think it means. For example A torrent can be \"popular\" in terms of times downloaded, but if you download it after most people already have it, you will not get any upload from it. You want to grab a torrent with in 10 minutes after upload, ideally "
     )
     line3 = (
-        "2.: For that reason, many people use autobrr, you might want to look into that: https://wiki.torrentleech.org/doku.php/autobrr - more about Autobrr here: https://autobrr.com "
+        "2.: Many people use AutoBrr to monitor our announce channel, found here #tlannounces. That way they don't need to manually browse the site, you might want to look into that: https://wiki.torrentleech.org/doku.php/autobrr - more about Autobrr here: https://autobrr.com "
     )
     line4 = (
         "3.: For that same reason, the freeleech link I posted earlier show only FL torrents uploaded to the site in the past 10 minutes. If it is empty, none have been uploaded in the past 10 minutes."
