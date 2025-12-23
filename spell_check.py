@@ -4,8 +4,8 @@ import os
 from collections import deque
 
 __module_name__ = "AutoCorrect"
-__module_version__ = "3.0"
-__module_description__ = "Spell checker using system dictionaries"
+__module_version__ = "3.1"
+__module_description__ = "Spell checker using system dictionaries (WeeChat style)"
 __author__ = 'Klapvogn'
 
 # Common misspellings and corrections
@@ -407,8 +407,8 @@ class AutoCorrect:
         self.word_start = 0
         self.word_end = 0
         self.suggestion_active = False
-        self.last_text = ""
-        self.last_check_word = ""
+        self.checked_words = set()  # Track which words we've already checked
+        self.min_word_length = 3  # Minimum word length to check (configurable)
         
         # Hook events
         hexchat.hook_print("Key Press", self.on_key_press)
@@ -416,82 +416,14 @@ class AutoCorrect:
         hexchat.hook_command("addword", self.cmd_addword)
         hexchat.hook_command("aspell", self.cmd_aspell)
         
-        # Check spelling periodically
-        hexchat.hook_timer(200, self.check_spelling_timer)
-        
-        hexchat.prnt("\00303System dictionary spell checker loaded")
-        hexchat.prnt("\00307Suggestions auto-appear - TAB to cycle, SPACE to accept")
+        hexchat.prnt("\00303System dictionary spell checker loaded (WeeChat style)")
+        hexchat.prnt("\00307Words checked after completion - TAB to cycle, SPACE to accept")
         hexchat.prnt("\00307Type /aspell help for commands")
     
-    def check_spelling_timer(self, userdata):
-        """Check spelling as you type and show suggestions automatically"""
-        if not self.enabled:
-            return 1
-        
-        try:
-            text = hexchat.get_info("inputbox")
-            if not text:
-                if self.suggestion_active:
-                    self.suggestion_active = False
-                    self.last_check_word = ""
-                return 1
-            
-            # Get the last word being typed
-            words = text.split()
-            if not words:
-                if self.suggestion_active:
-                    self.suggestion_active = False
-                    self.last_check_word = ""
-                return 1
-            
-            last_word = words[-1]
-            
-            # Only check words of reasonable length
-            if len(last_word) < 2:
-                if self.suggestion_active:
-                    self.suggestion_active = False
-                    self.last_check_word = ""
-                return 1
-            
-            # Find position of last word
-            word_start = text.rfind(last_word)
-            word_end = word_start + len(last_word)
-            
-            # Check if this is a new word or word changed
-            if last_word != self.last_check_word:
-                self.last_check_word = last_word
-                self.current_word = last_word
-                self.word_start = word_start
-                self.word_end = word_end
-                
-                # Check spelling
-                if not self.spell.check(last_word):
-                    suggestions = self.spell.suggest(last_word)
-                    if suggestions:
-                        self.suggestions = deque(suggestions)
-                        self.suggestion_active = True
-                        
-                        # Show suggestion automatically
-                        hexchat.prnt(f"\00304'{last_word}'\00307 → \00303{suggestions[0]}\00307 (TAB=cycle, SPACE=accept)")
-                    else:
-                        self.suggestion_active = False
-                else:
-                    self.suggestion_active = False
-            elif self.suggestion_active:
-                # Update word boundaries as user types
-                self.current_word = last_word
-                self.word_start = word_start
-                self.word_end = word_end
-            
-        except:
-            pass
-        
-        return 1
-    
     def on_key_press(self, word, word_eol, userdata):
-        """Handle TAB and SPACE keys for suggestion cycling and accepting"""
+        """Handle key presses - check words after space/punctuation"""
         try:
-            if not word:
+            if not word or not self.enabled:
                 return hexchat.EAT_NONE
             
             key_code = int(word[0])
@@ -507,41 +439,111 @@ class AutoCorrect:
                 
                 return hexchat.EAT_ALL  # Eat the TAB key
             
-            # SPACE key = 32 - accept current suggestion
-            elif key_code == 32 and self.suggestion_active and self.suggestions:
-                suggestion = self.suggestions[0]
-                text = hexchat.get_info("inputbox")
-                
-                if text and self.word_start >= 0 and self.word_end <= len(text):
-                    # Replace the misspelled word with suggestion and add space
-                    new_text = text[:self.word_start] + suggestion + " " + text[self.word_end:]
+            # SPACE key = 32 - check word before space, or accept suggestion
+            elif key_code == 32:
+                if self.suggestion_active and self.suggestions:
+                    # Accept current suggestion
+                    suggestion = self.suggestions[0]
+                    text = hexchat.get_info("inputbox")
                     
-                    # Calculate cursor position (after the space)
-                    new_cursor_pos = self.word_start + len(suggestion) + 1
-                    
-                    # Apply changes
-                    hexchat.command("settext " + new_text)
-                    hexchat.command("setcursor " + str(new_cursor_pos))
-                    
-                    # Clear suggestion state
-                    self.suggestion_active = False
-                    self.suggestions.clear()
-                    self.last_check_word = ""
-                    
-                    return hexchat.EAT_ALL  # Eat the SPACE key
+                    if text and self.word_start >= 0 and self.word_end <= len(text):
+                        # Replace the misspelled word with suggestion and add space
+                        new_text = text[:self.word_start] + suggestion + " " + text[self.word_end:]
+                        
+                        # Calculate cursor position (after the space)
+                        new_cursor_pos = self.word_start + len(suggestion) + 1
+                        
+                        # Apply changes
+                        hexchat.command("settext " + new_text)
+                        hexchat.command("setcursor " + str(new_cursor_pos))
+                        
+                        # Clear suggestion state
+                        self.suggestion_active = False
+                        self.suggestions.clear()
+                        
+                        return hexchat.EAT_ALL  # Eat the SPACE key
+                else:
+                    # Check the word before the space
+                    text = hexchat.get_info("inputbox")
+                    if text:
+                        # Get the last word
+                        words = text.split()
+                        if words:
+                            last_word = words[-1]
+                            
+                            # Only check if word is long enough and not already checked
+                            if len(last_word) >= self.min_word_length and last_word not in self.checked_words:
+                                self.check_word(last_word, text)
+                                self.checked_words.add(last_word)
+            
+            # Punctuation keys - check word before punctuation
+            elif key_code in [46, 44, 33, 63, 59, 58]:  # . , ! ? ; :
+                if not self.suggestion_active:  # Only if not accepting a suggestion
+                    text = hexchat.get_info("inputbox")
+                    if text:
+                        words = text.split()
+                        if words:
+                            last_word = words[-1]
+                            if len(last_word) >= self.min_word_length and last_word not in self.checked_words:
+                                self.check_word(last_word, text)
+                                self.checked_words.add(last_word)
             
             # ESC key = 65307 - cancel suggestions
             elif key_code == 65307 and self.suggestion_active:
                 self.suggestion_active = False
                 self.suggestions.clear()
-                self.last_check_word = ""
                 hexchat.prnt("\00307Suggestion cancelled")
                 return hexchat.EAT_NONE
+            
+            # Enter key = 65293 - check last word before sending
+            elif key_code == 65293:
+                if not self.suggestion_active:
+                    text = hexchat.get_info("inputbox")
+                    if text:
+                        words = text.split()
+                        if words:
+                            last_word = words[-1]
+                            if len(last_word) >= self.min_word_length and last_word not in self.checked_words:
+                                self.check_word(last_word, text)
+                                self.checked_words.add(last_word)
+                
+                # Clear checked words when message is sent
+                self.checked_words.clear()
+            
+            # Backspace = 65288 - clear suggestion if active
+            elif key_code == 65288 and self.suggestion_active:
+                self.suggestion_active = False
+                self.suggestions.clear()
             
         except:
             pass
         
         return hexchat.EAT_NONE
+    
+    def check_word(self, word, full_text):
+        """Check a completed word for spelling"""
+        # Clean the word of any trailing punctuation for checking
+        word_clean = word.rstrip('.,!?;:')
+        
+        if not word_clean or len(word_clean) < self.min_word_length:
+            return
+        
+        # Check spelling
+        if not self.spell.check(word_clean):
+            suggestions = self.spell.suggest(word_clean)
+            if suggestions:
+                # Find position of the word
+                word_start = full_text.rfind(word)
+                word_end = word_start + len(word_clean)
+                
+                self.current_word = word_clean
+                self.word_start = word_start
+                self.word_end = word_end
+                self.suggestions = deque(suggestions)
+                self.suggestion_active = True
+                
+                # Show suggestion
+                hexchat.prnt(f"\00304'{word_clean}'\00307 → \00303{suggestions[0]}\00307 (TAB=cycle, SPACE=accept, ESC=ignore)")
     
     def cmd_spell(self, words, word_eol, userdata):
         """Manual spell check: /spell <word>"""
@@ -586,15 +588,38 @@ class AutoCorrect:
             hexchat.prnt("  \00307/addword <word>\00303 - Add word to personal dictionary")
             hexchat.prnt("  \00307/aspell enable|disable\00303 - Toggle spell checking")
             hexchat.prnt("  \00307/aspell status\00303 - Show current status")
+            hexchat.prnt("  \00307/aspell minlength <n>\00303 - Set minimum word length (default: 3)")
             hexchat.prnt("  \00307/aspell path\00303 - Show dictionary file location")
             hexchat.prnt("  \00307/aspell reload\00303 - Reload dictionary from disk")
             hexchat.prnt("  \00307/aspell help\00303 - Show this help")
-            hexchat.prnt("\00303How to use:")
-            hexchat.prnt("  1. Type normally - suggestions appear automatically")
+            hexchat.prnt("\00303How to use (WeeChat style):")
+            hexchat.prnt("  1. Type normally - words are checked when you press:")
+            hexchat.prnt("     \00307SPACE\00303, punctuation (.,!?;:), or \00307ENTER")
             hexchat.prnt("  2. When you see a suggestion:")
             hexchat.prnt("     \00307TAB\00303 - Cycle through different suggestions")
             hexchat.prnt("     \00307SPACE\00303 - Accept current suggestion and add space")
             hexchat.prnt("     \00307ESC\00303 - Cancel and keep your spelling")
+            hexchat.prnt("  3. Only words with 3+ letters are checked (configurable)")
+            return hexchat.EAT_ALL
+        
+        elif words[1].lower() == "minlength":
+            if len(words) < 3:
+                hexchat.prnt(f"\00303Current minimum word length: {self.min_word_length}")
+                hexchat.prnt("\00307Usage: /aspell minlength <number>")
+                return hexchat.EAT_ALL
+            
+            try:
+                new_length = int(words[2])
+                if new_length < 1:
+                    hexchat.prnt("\00304Minimum length must be at least 1")
+                elif new_length > 10:
+                    hexchat.prnt("\00304Minimum length too high (max 10)")
+                else:
+                    self.min_word_length = new_length
+                    hexchat.prnt(f"\00303Minimum word length set to {new_length}")
+            except ValueError:
+                hexchat.prnt("\00304Invalid number")
+            
             return hexchat.EAT_ALL
         
         elif words[1].lower() == "path":
@@ -654,6 +679,7 @@ class AutoCorrect:
         elif words[1].lower() == "status":
             status = "enabled" if self.enabled else "disabled"
             hexchat.prnt(f"\00303Spell checking is {status}")
+            hexchat.prnt(f"\00303Minimum word length: {self.min_word_length}")
             
             if self.spell.use_aspell:
                 hexchat.prnt("\00303Using: aspell")
