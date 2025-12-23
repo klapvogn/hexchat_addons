@@ -41,6 +41,25 @@ def hi_cmd(word, word_eol, userdata):
 # Register both commands
 hexchat.hook_command("hi", hi_cmd, help="/hi <username> - Welcome message")
 
+#----
+# Bye
+#----
+def bye_cmd(word, word_eol, userdata):
+    if len(word) < 2:
+        hexchat.command("say Usage: /bye <username>")
+        return hexchat.EAT_ALL
+    
+    username = word[1].strip()  # Use word[1] and remove any leading/trailing spaces
+    
+    # Send the formatted welcome message
+    response = f"If there is nothing more, {username}, I wish you a good day or evening. You can now close the chat window or type /part. Bye."
+    
+    hexchat.command(f"say {response}")
+    return hexchat.EAT_ALL
+
+# Register both commands
+hexchat.hook_command("bye", bye_cmd, help="/bye <username> - Leave message")
+
 #------
 # Idler
 #------
@@ -152,7 +171,7 @@ def fl_cmd(word, word_eol, userdata):
         "2.: Many people use AutoBrr to monitor our announce channel, found here #tlannounces. That way they don't need to manually browse the site, you might want to look into that: https://wiki.torrentleech.org/doku.php/autobrr - more about Autobrr here: https://autobrr.com "
     )
     line4 = (
-        "3.: For that same reason, the freeleech link I posted earlier show only FL torrents uploaded to the site in the past 10 minutes. If it is empty, none have been uploaded in the past 10 minutes."
+        "3.: The freeleech link I posted above is a great way to build ratio with. Freeleech torrents uploaded to the site in the past 10 minutes. If the freeleech page is empty, none have been uploaded in the past 10 minutes."
     )
 
     hexchat.command(f"say {line1}")
