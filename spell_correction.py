@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-HexChat Spell Correction Script - Auto-correction with Cycling
+HexChat Spell Correction Script - Auto-correction with cycling
 
 Workflow:
 1. Type a word and press SPACE - suggestions appear if misspelled
-2. Type /n to cycle through different suggestions (don't → font → dint → don't)
+2. Type /n to cycle through suggestions (don't → font → dint → don't)
 3. Press SPACE SPACE (double-space) - uses the selected suggestion
 4. Or use /fix to correct all errors at once
+
+Optional: Bind TAB key to /n in Settings → Keyboard Shortcuts
 
 Simple and effective!
 """
 
 __module_name__ = "spell_correction"
-__module_version__ = "3.1"
-__module_description__ = "Auto spell correction with cycling"
+__module_version__ = "3.2"
+__module_description__ = "Auto spell correction with /n cycling (TAB bindable)"
 
 try:
     import hexchat
@@ -315,7 +317,7 @@ def check_input_timer(userdata):
                                 
                                 if other_suggs:
                                     hexchat.prnt(f"\00304{last_word}\003 → {first_sugg}, {other_suggs}")
-                                    hexchat.prnt("Type /n to cycle suggestions, SPACE SPACE to accept")
+                                    hexchat.prnt("Type /n to cycle, SPACE SPACE to accept")
                                 else:
                                     hexchat.prnt(f"\00304{last_word}\003 → {first_sugg}")
                                     hexchat.prnt("Press SPACE SPACE to accept")
@@ -360,7 +362,7 @@ def cmd_next_suggestion(word, word_eol, userdata):
             sugg_display.append(sugg)
     
     hexchat.prnt(f"\00304{pending['word']}\003 → {', '.join(sugg_display)}")
-    hexchat.prnt("Press SPACE SPACE to accept, or /n to cycle again")
+    hexchat.prnt("Press TAB or /n to cycle, SPACE SPACE to accept")
     
     return hexchat.EAT_ALL
 
@@ -529,7 +531,7 @@ else:
         check_timer = hexchat.hook_timer(config['check_delay'], check_input_timer)
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
-        hexchat.prnt("\00303         How to use (SUPER SIMPLE!):\003")
+        hexchat.prnt("\00303         How to use:\003")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
         hexchat.prnt("  1. Type your sentence normally")
@@ -537,15 +539,18 @@ else:
         hexchat.prnt("     Suggestions show (\00303GREEN\003 = first)")
         hexchat.prnt("")
         hexchat.prnt("  3. Type \00302/n\003 to cycle through suggestions")
-        hexchat.prnt("     (toggles: don't, font, dint, etc.)")
+        hexchat.prnt("     (or bind TAB key - see below)")
         hexchat.prnt("")
-        hexchat.prnt("  4. Press \00302SPACE SPACE\003 (double-space)")
-        hexchat.prnt("     → Uses selected suggestion(s)")
+        hexchat.prnt("  4. Press \00302SPACE SPACE\003 to accept")
+        hexchat.prnt("")
+        hexchat.prnt("\00303 Optional: Bind TAB key to /n:\003")
+        hexchat.prnt("  • Settings → Keyboard Shortcuts")
+        hexchat.prnt("  • Add: TAB → /n")
         hexchat.prnt("")
         hexchat.prnt("  Example:")
         hexchat.prnt("    Type: I dont know")
         hexchat.prnt("    See:  dont → don't, font, dint")
-        hexchat.prnt("    Type: /n")
+        hexchat.prnt("    Type: /n  (or press TAB if bound)")
         hexchat.prnt("    See:  dont → don't, [font], dint")
         hexchat.prnt("    Type: /n")
         hexchat.prnt("    See:  dont → [don't], font, dint")
@@ -554,7 +559,7 @@ else:
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
-        hexchat.prnt("Commands: \00302/n\003 (cycle) \00302/fix\003 (fix all) /spellcheck")
+        hexchat.prnt("Commands: \00302/n\003 (cycle) \00302/fix\003 (all) /spellcheck")
         hexchat.prnt("")
     else:
         hexchat.prnt(f"{__module_name__} loaded but failed to initialize")
