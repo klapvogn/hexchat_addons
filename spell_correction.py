@@ -13,8 +13,8 @@ Simple and effective!
 """
 
 __module_name__ = "spell_correction"
-__module_version__ = "3.6"
-__module_description__ = "Auto spell correction with Ctrl+Arrow bidirectional cycling"
+__module_version__ = "3.8"
+__module_description__ = "Auto spell correction with common typo detection (si→is, fo→of, etc.)"
 
 try:
     import hexchat
@@ -43,7 +43,7 @@ detected_errors = {}
 # Configuration
 config = {
     'max_suggestions': 5,
-    'min_word_length': 3,
+    'min_word_length': 2,  # Check words with 2+ letters (was 3)
     'check_delay': 150,
 }
 
@@ -97,7 +97,24 @@ def check_word(word):
         'theyd', 'youd', 'ill', 'youll', 'hell', 'shell', 'theyll'
     ]
     
+    # Common typos that should be flagged even if technically valid words
+    # (e.g., "si" is a musical note but usually a typo for "is")
+    common_typos = {
+        'si': 'is',
+        'fo': 'of',
+        'ti': 'it',
+        'od': 'do',
+        'ot': 'to',
+        'teh': 'the',
+        'hte': 'the',
+        'adn': 'and',
+        'nad': 'and',
+    }
+    
     if word.lower() in contractions_to_fix:
+        return False
+    
+    if word.lower() in common_typos:
         return False
     
     return spell_checker.check(word)
@@ -111,6 +128,36 @@ def get_suggestions(word, max_suggestions=None):
     if max_suggestions is None:
         max_suggestions = config['max_suggestions']
     
+    # Common typos with their corrections
+    common_typos = {
+        'si': 'is',
+        'fo': 'of',
+        'ti': 'it',
+        'od': 'do',
+        'ot': 'to',
+        'teh': 'the',
+        'hte': 'the',
+        'adn': 'and',
+        'nad': 'and',
+    }
+    
+    word_lower = word.lower()
+    
+    # Check if it's a common typo first
+    if word_lower in common_typos:
+        correct_form = common_typos[word_lower]
+        # Preserve original capitalization
+        if word[0].isupper():
+            correct_form = correct_form[0].upper() + correct_form[1:]
+        suggestions = [correct_form]
+        # Add other suggestions from spell checker
+        other_suggestions = spell_checker.suggest(word)
+        for sugg in other_suggestions:
+            if sugg not in suggestions:
+                suggestions.append(sugg)
+        return suggestions[:max_suggestions]
+    
+    # Check for contractions
     contractions = {
         'dont': "don't", 'doesnt': "doesn't", 'didnt': "didn't",
         'wont': "won't", 'cant': "can't", 'couldnt': "couldn't",
@@ -130,13 +177,14 @@ def get_suggestions(word, max_suggestions=None):
         'shell': "she'll", 'well': "we'll", 'theyll': "they'll",
     }
     
-    word_lower = word.lower()
-    
+    # If it's a known contraction without apostrophe, return the correct form first
     if word_lower in contractions:
         correct_form = contractions[word_lower]
+        # Preserve original capitalization pattern
         if word[0].isupper():
             correct_form = correct_form[0].upper() + correct_form[1:]
         suggestions = [correct_form]
+        # Add other suggestions after
         other_suggestions = spell_checker.suggest(word)
         for sugg in other_suggestions:
             if sugg not in suggestions:
