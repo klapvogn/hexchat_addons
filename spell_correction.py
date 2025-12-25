@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-HexChat Spell Correction Script - Auto-correction with Space
-Shows suggestions after you type a word, press space again to accept
+HexChat Spell Correction Script - Auto-correction with Cycling
 
 Workflow:
 1. Type a word and press SPACE - suggestions appear if misspelled
-2. Press SPACE again - automatically replaces with the green suggestion
-3. Continue typing normally
+2. Type /n to cycle through different suggestions (don't → font → dint → don't)
+3. Press SPACE SPACE (double-space) - uses the selected suggestion
+4. Or use /fix to correct all errors at once
 
-No commands needed!
+Simple and effective!
 """
 
 __module_name__ = "spell_correction"
-__module_version__ = "3.0"
-__module_description__ = "Auto spell correction with space key"
+__module_version__ = "3.1"
+__module_description__ = "Auto spell correction with cycling"
 
 try:
     import hexchat
@@ -37,6 +37,7 @@ enabled = True
 previous_input = {}
 check_timer = None
 pending_correction = {}  # {context_key: {'word': str, 'suggestion': str, 'position': int}}
+detected_errors = {}  # {context_key: [{'word': str, 'suggestions': list, 'position': int}]}
 
 # Configuration
 config = {
@@ -86,6 +87,19 @@ def check_word(word):
     if not word.isalpha():
         return True
     
+    # Common contractions without apostrophes should be flagged as misspelled
+    contractions_to_fix = [
+        'dont', 'doesnt', 'didnt', 'wont', 'cant', 'couldnt', 'wouldnt', 
+        'shouldnt', 'isnt', 'arent', 'wasnt', 'werent', 'hasnt', 'havent',
+        'hadnt', 'shant', 'ive', 'youve', 'weve', 'theyve', 'youre', 
+        'theyre', 'im', 'hes', 'shes', 'thats', 'whats', 'wheres',
+        'whos', 'hows', 'theres', 'heres', 'id', 'hed', 'shed', 'wed',
+        'theyd', 'youd', 'ill', 'youll', 'hell', 'shell', 'theyll'
+    ]
+    
+    if word.lower() in contractions_to_fix:
+        return False  # Flag as misspelled so we can suggest the contraction
+    
     return spell_checker.check(word)
 
 
@@ -96,6 +110,73 @@ def get_suggestions(word, max_suggestions=None):
     
     if max_suggestions is None:
         max_suggestions = config['max_suggestions']
+    
+    # Check for common contractions first
+    contractions = {
+        'dont': "don't",
+        'doesnt': "doesn't",
+        'didnt': "didn't",
+        'wont': "won't",
+        'cant': "can't",
+        'couldnt': "couldn't",
+        'wouldnt': "wouldn't",
+        'shouldnt': "shouldn't",
+        'isnt': "isn't",
+        'arent': "aren't",
+        'wasnt': "wasn't",
+        'werent': "weren't",
+        'hasnt': "hasn't",
+        'havent': "haven't",
+        'hadnt': "hadn't",
+        'wont': "won't",
+        'shant': "shan't",
+        'ive': "I've",
+        'youve': "you've",
+        'weve': "we've",
+        'theyve': "they've",
+        'youre': "you're",
+        'theyre': "they're",
+        'were': "we're",
+        'im': "I'm",
+        'hes': "he's",
+        'shes': "she's",
+        'its': "it's",
+        'thats': "that's",
+        'whats': "what's",
+        'wheres': "where's",
+        'whos': "who's",
+        'hows': "how's",
+        'theres': "there's",
+        'heres': "here's",
+        'id': "I'd",
+        'hed': "he'd",
+        'shed': "she'd",
+        'wed': "we'd",
+        'theyd': "they'd",
+        'youd': "you'd",
+        'ill': "I'll",
+        'youll': "you'll",
+        'hell': "he'll",
+        'shell': "she'll",
+        'well': "we'll",
+        'theyll': "they'll",
+    }
+    
+    word_lower = word.lower()
+    
+    # If it's a known contraction without apostrophe, return the correct form first
+    if word_lower in contractions:
+        correct_form = contractions[word_lower]
+        # Preserve original capitalization pattern
+        if word[0].isupper():
+            correct_form = correct_form[0].upper() + correct_form[1:]
+        suggestions = [correct_form]
+        # Add other suggestions after
+        other_suggestions = spell_checker.suggest(word)
+        for sugg in other_suggestions:
+            if sugg not in suggestions:
+                suggestions.append(sugg)
+        return suggestions[:max_suggestions]
     
     suggestions = spell_checker.suggest(word)
     return suggestions[:max_suggestions]
@@ -130,44 +211,70 @@ def check_input_timer(userdata):
         input_text = hexchat.get_info("inputbox") or ""
         prev_input = previous_input.get(context_key, "")
         
-        # Detect double-space for auto-correction
-        if context_key in pending_correction:
-            # Check if user pressed space again (double space pattern)
-            if input_text.endswith('  '):  # Double space detected
-                pending = pending_correction[context_key]
+        # Auto-fix: Only trigger on double-space when there are detected errors
+        if context_key in detected_errors and len(detected_errors[context_key]) > 0:
+            # Double-space means user wants to fix all errors
+            if input_text.endswith('  ') and not prev_input.endswith('  '):
+                # Get current words from input (strip trailing spaces)
+                current_text = input_text.rstrip()
+                words = current_text.split()
                 
-                # Replace the misspelled word with the suggestion
-                text_without_trailing_spaces = input_text.rstrip()
-                position = pending['position']
-                
-                # Get words and replace at position
-                words = text_without_trailing_spaces.split()
-                if position < len(words) and words[position] == pending['word']:
-                    old_word = pending['word']
-                    new_word = pending['suggestion']
-                    words[position] = new_word
-                    new_text = ' '.join(words) + ' '
+                if len(words) > 0:
+                    # Build a map of positions to corrections
+                    corrections_map = {}
+                    for error in detected_errors[context_key]:
+                        # Check if this error has a selected suggestion (via /n command)
+                        if (context_key in pending_correction and 
+                            pending_correction[context_key]['word'] == error['word']):
+                            # Use the selected suggestion
+                            new_word = pending_correction[context_key]['suggestion']
+                        else:
+                            # Use first suggestion
+                            new_word = error['suggestions'][0] if error['suggestions'] else error['word']
+                        
+                        corrections_map[error['position']] = {
+                            'old': error['word'],
+                            'new': new_word
+                        }
                     
-                    # Calculate cursor position adjustment
-                    # Find where the old word was in the original text
-                    word_start = 0
-                    for i in range(position):
-                        word_start += len(words[i]) + 1  # +1 for space
+                    # Apply all corrections
+                    new_words = []
+                    corrections_made = []
                     
-                    # New cursor position should be after the replaced word
-                    word_length_diff = len(new_word) - len(old_word)
-                    new_cursor_pos = word_start + len(new_word) + 1  # +1 for the space after
+                    for i, word in enumerate(words):
+                        if i in corrections_map:
+                            old_word = corrections_map[i]['old']
+                            new_word = corrections_map[i]['new']
+                            
+                            # Check if word still matches (strip punctuation for comparison)
+                            clean_word = word.strip('.,!?;:\'"')
+                            if clean_word == old_word:
+                                # Replace while keeping punctuation
+                                corrected_word = word.replace(old_word, new_word)
+                                new_words.append(corrected_word)
+                                corrections_made.append((old_word, new_word))
+                            else:
+                                new_words.append(word)
+                        else:
+                            new_words.append(word)
                     
-                    # Set text and cursor position
-                    hexchat.command(f"settext {new_text}")
-                    hexchat.command(f"setcursor {new_cursor_pos}")
-                    
-                    hexchat.prnt(f"\00303✓ '{old_word}' → '{new_word}'\003")
-                    
-                    # Clear pending correction
-                    del pending_correction[context_key]
-                    previous_input[context_key] = new_text
-                    return 1
+                    if corrections_made:
+                        new_text = ' '.join(new_words) + ' '
+                        cursor_pos = len(new_text)
+                        
+                        hexchat.command(f"settext {new_text}")
+                        hexchat.command(f"setcursor {cursor_pos}")
+                        
+                        # Show what was corrected
+                        for old, new in corrections_made:
+                            hexchat.prnt(f"\00303✓ '{old}' → '{new}'\003")
+                        
+                        # Clear detected errors
+                        del detected_errors[context_key]
+                        if context_key in pending_correction:
+                            del pending_correction[context_key]
+                        previous_input[context_key] = new_text
+                        return 1
         
         # Detect single space (word completion)
         if len(input_text) > len(prev_input):
@@ -187,9 +294,20 @@ def check_input_timer(userdata):
                                 word_position = len(words) - 1
                                 pending_correction[context_key] = {
                                     'word': last_word,
+                                    'suggestions': suggestions,
                                     'suggestion': suggestions[0],
-                                    'position': word_position
+                                    'position': word_position,
+                                    'index': 0  # Track which suggestion is selected
                                 }
+                                
+                                # Also store in detected_errors for later correction
+                                if context_key not in detected_errors:
+                                    detected_errors[context_key] = []
+                                detected_errors[context_key].append({
+                                    'word': last_word,
+                                    'suggestions': suggestions,
+                                    'position': word_position
+                                })
                                 
                                 # Display: red word -> green suggestion + other suggestions
                                 first_sugg = f"\00303{suggestions[0]}\003"  # Green
@@ -197,10 +315,10 @@ def check_input_timer(userdata):
                                 
                                 if other_suggs:
                                     hexchat.prnt(f"\00304{last_word}\003 → {first_sugg}, {other_suggs}")
+                                    hexchat.prnt("Type /n to cycle suggestions, SPACE SPACE to accept")
                                 else:
                                     hexchat.prnt(f"\00304{last_word}\003 → {first_sugg}")
-                                
-                                hexchat.prnt("\00302Press SPACE again to use the green suggestion\003")
+                                    hexchat.prnt("Press SPACE SPACE to accept")
             
             # User is typing after seeing suggestions - clear pending
             elif context_key in pending_correction and not input_text.endswith(' '):
@@ -212,6 +330,101 @@ def check_input_timer(userdata):
         hexchat.prnt(f"Spell check error: {e}")
     
     return 1
+
+
+def cmd_next_suggestion(word, word_eol, userdata):
+    """Cycle to next suggestion for last misspelled word"""
+    context_key = get_context_key()
+    
+    if context_key not in pending_correction:
+        hexchat.prnt("No pending correction")
+        return hexchat.EAT_ALL
+    
+    pending = pending_correction[context_key]
+    suggestions = pending['suggestions']
+    
+    if not suggestions:
+        hexchat.prnt("No suggestions available")
+        return hexchat.EAT_ALL
+    
+    # Cycle to next suggestion
+    pending['index'] = (pending['index'] + 1) % len(suggestions)
+    pending['suggestion'] = suggestions[pending['index']]
+    
+    # Display all suggestions with current one highlighted
+    sugg_display = []
+    for i, sugg in enumerate(suggestions):
+        if i == pending['index']:
+            sugg_display.append(f"\00303[{sugg}]\003")  # Green with brackets for selected
+        else:
+            sugg_display.append(sugg)
+    
+    hexchat.prnt(f"\00304{pending['word']}\003 → {', '.join(sugg_display)}")
+    hexchat.prnt("Press SPACE SPACE to accept, or /n to cycle again")
+    
+    return hexchat.EAT_ALL
+
+
+def cmd_spellfix(word, word_eol, userdata):
+    """Fix all misspelled words in current input"""
+    if spell_checker is None:
+        hexchat.prnt("Spell checker not initialized")
+        return hexchat.EAT_ALL
+    
+    context_key = get_context_key()
+    input_text = hexchat.get_info("inputbox") or ""
+    
+    if not input_text.strip():
+        hexchat.prnt("Input is empty")
+        return hexchat.EAT_ALL
+    
+    # Get all words and check them
+    words = input_text.split()
+    replacements = []
+    
+    for i, w in enumerate(words):
+        clean_word = w.strip('.,!?;:\'"')
+        if len(clean_word) >= config['min_word_length'] and clean_word.isalpha():
+            if not check_word(clean_word):
+                suggestions = get_suggestions(clean_word, 1)
+                if suggestions:
+                    replacements.append({
+                        'position': i,
+                        'old': clean_word,
+                        'new': suggestions[0],
+                        'original': w  # Keep punctuation
+                    })
+    
+    if not replacements:
+        hexchat.prnt("\00303No misspelled words found!\003")
+        return hexchat.EAT_ALL
+    
+    # Apply replacements
+    new_words = words[:]
+    for rep in replacements:
+        # Replace while keeping punctuation
+        old_word = rep['original']
+        new_word = old_word.replace(rep['old'], rep['new'])
+        new_words[rep['position']] = new_word
+        hexchat.prnt(f"\00303✓ '{rep['old']}' → '{rep['new']}'\003")
+    
+    new_text = ' '.join(new_words)
+    
+    # Preserve trailing space if it existed
+    if input_text.endswith(' '):
+        new_text += ' '
+    
+    # Calculate cursor position (end of text)
+    cursor_pos = len(new_text)
+    
+    hexchat.command(f"settext {new_text}")
+    hexchat.command(f"setcursor {cursor_pos}")
+    
+    # Clear detected errors for this context
+    if context_key in detected_errors:
+        del detected_errors[context_key]
+    
+    return hexchat.EAT_ALL
 
 
 def cmd_spellcheck(word, word_eol, userdata):
@@ -295,11 +508,12 @@ def cmd_spellcancel(word, word_eol, userdata):
 
 def unload_cb(userdata):
     """Cleanup when script is unloaded"""
-    global check_timer, pending_correction, previous_input
+    global check_timer, pending_correction, previous_input, detected_errors
     
     check_timer = None
     pending_correction.clear()
     previous_input.clear()
+    detected_errors.clear()
     
     hexchat.prnt(f"{__module_name__} version {__module_version__} unloaded")
     return hexchat.EAT_NONE
@@ -315,26 +529,40 @@ else:
         check_timer = hexchat.hook_timer(config['check_delay'], check_input_timer)
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
-        hexchat.prnt("\00303         How to use (SIMPLE!):\003")
+        hexchat.prnt("\00303         How to use (SUPER SIMPLE!):\003")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
-        hexchat.prnt("  1. Type a word and press \00302SPACE\003")
-        hexchat.prnt("  2. If misspelled → suggestions appear")
-        hexchat.prnt("     • \00304Red word\003 = wrong")
-        hexchat.prnt("     • \00303Green word\003 = correct suggestion")
+        hexchat.prnt("  1. Type your sentence normally")
+        hexchat.prnt("  2. Misspelled words show in \00304RED\003")
+        hexchat.prnt("     Suggestions show (\00303GREEN\003 = first)")
         hexchat.prnt("")
-        hexchat.prnt("  3. Press \00302SPACE AGAIN\003 to use green word")
-        hexchat.prnt("  4. Or just keep typing to ignore it")
+        hexchat.prnt("  3. Type \00302/n\003 to cycle through suggestions")
+        hexchat.prnt("     (toggles: don't, font, dint, etc.)")
+        hexchat.prnt("")
+        hexchat.prnt("  4. Press \00302SPACE SPACE\003 (double-space)")
+        hexchat.prnt("     → Uses selected suggestion(s)")
+        hexchat.prnt("")
+        hexchat.prnt("  Example:")
+        hexchat.prnt("    Type: I dont know")
+        hexchat.prnt("    See:  dont → don't, font, dint")
+        hexchat.prnt("    Type: /n")
+        hexchat.prnt("    See:  dont → don't, [font], dint")
+        hexchat.prnt("    Type: /n")
+        hexchat.prnt("    See:  dont → [don't], font, dint")
+        hexchat.prnt("    Press: SPACE SPACE")
+        hexchat.prnt("    Result: I don't know")
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
-        hexchat.prnt("Commands: /spellcheck /spelldict /spelltoggle")
+        hexchat.prnt("Commands: \00302/n\003 (cycle) \00302/fix\003 (fix all) /spellcheck")
         hexchat.prnt("")
     else:
         hexchat.prnt(f"{__module_name__} loaded but failed to initialize")
         hexchat.prnt("Use /spelldict to select a dictionary")
 
 # Register commands
+hexchat.hook_command("n", cmd_next_suggestion, help="Cycle to next spelling suggestion")
+hexchat.hook_command("fix", cmd_spellfix, help="Fix all misspelled words in current input")
 hexchat.hook_command("spellcheck", cmd_spellcheck, help="Check spelling of current input")
 hexchat.hook_command("spelldict", cmd_spelldict, help="Change dictionary: /spelldict <language>")
 hexchat.hook_command("spelltoggle", cmd_spelltoggle, help="Toggle spell checking on/off")
