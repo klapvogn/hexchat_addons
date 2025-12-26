@@ -47,6 +47,42 @@ config = {
     'check_delay': 150,
 }
 
+# Common typos with their corrections
+COMMON_TYPOS = {
+    'si': 'is',
+    'fo': 'of',
+    'ti': 'it',
+    'od': 'do',
+    'ot': 'to',
+    'teh': 'the',
+    'hte': 'the',
+    'adn': 'and',
+    'nad': 'and',
+}
+
+# Contractions without apostrophes mapped to correct forms
+CONTRACTIONS = {
+    'dont': "don't", 'doesnt': "doesn't", 'didnt': "didn't",
+    'wont': "won't", 'cant': "can't", 'couldnt': "couldn't",
+    'wouldnt': "wouldn't", 'shouldnt': "shouldn't",
+    'isnt': "isn't", 'arent': "aren't", 'wasnt': "wasn't",
+    'werent': "weren't", 'hasnt': "hasn't", 'havent': "haven't",
+    'hadnt': "hadn't", 'shant': "shan't",
+    'ive': "I've", 'youve': "you've", 'weve': "we've",
+    'theyve': "they've", 'youre': "you're", 'theyre': "they're",
+    'were': "we're", 'im': "I'm", 'hes': "he's", 'shes': "she's",
+    'its': "it's", 'thats': "that's", 'whats': "what's",
+    'wheres': "where's", 'whos': "who's", 'hows': "how's",
+    'theres': "there's", 'heres': "here's",
+    'id': "I'd", 'hed': "he'd", 'shed': "she'd", 'wed': "we'd",
+    'theyd': "they'd", 'youd': "you'd",
+    'ill': "I'll", 'youll': "you'll", 'hell': "he'll",
+    'shell': "she'll", 'well': "we'll", 'theyll': "they'll",
+}
+
+# List of contractions to check (for check_word function)
+CONTRACTIONS_TO_FIX = list(CONTRACTIONS.keys())
+
 
 def get_context_key():
     """Get a unique key for the current context"""
@@ -88,33 +124,13 @@ def check_word(word):
     if not word.isalpha():
         return True
     
-    contractions_to_fix = [
-        'dont', 'doesnt', 'didnt', 'wont', 'cant', 'couldnt', 'wouldnt', 
-        'shouldnt', 'isnt', 'arent', 'wasnt', 'werent', 'hasnt', 'havent',
-        'hadnt', 'shant', 'ive', 'youve', 'weve', 'theyve', 'youre', 
-        'theyre', 'im', 'hes', 'shes', 'thats', 'whats', 'wheres',
-        'whos', 'hows', 'theres', 'heres', 'id', 'hed', 'shed', 'wed',
-        'theyd', 'youd', 'ill', 'youll', 'hell', 'shell', 'theyll'
-    ]
-    
-    # Common typos that should be flagged even if technically valid words
-    # (e.g., "si" is a musical note but usually a typo for "is")
-    common_typos = {
-        'si': 'is',
-        'fo': 'of',
-        'ti': 'it',
-        'od': 'do',
-        'ot': 'to',
-        'teh': 'the',
-        'hte': 'the',
-        'adn': 'and',
-        'nad': 'and',
-    }
-    
-    if word.lower() in contractions_to_fix:
+    # Check if it's a contraction without apostrophe
+    if word.lower() in CONTRACTIONS_TO_FIX:
         return False
     
-    if word.lower() in common_typos:
+    # Check if it's a common typo that should be flagged
+    # (e.g., "si" is a musical note but usually a typo for "is")
+    if word.lower() in COMMON_TYPOS:
         return False
     
     return spell_checker.check(word)
@@ -128,24 +144,11 @@ def get_suggestions(word, max_suggestions=None):
     if max_suggestions is None:
         max_suggestions = config['max_suggestions']
     
-    # Common typos with their corrections
-    common_typos = {
-        'si': 'is',
-        'fo': 'of',
-        'ti': 'it',
-        'od': 'do',
-        'ot': 'to',
-        'teh': 'the',
-        'hte': 'the',
-        'adn': 'and',
-        'nad': 'and',
-    }
-    
     word_lower = word.lower()
     
     # Check if it's a common typo first
-    if word_lower in common_typos:
-        correct_form = common_typos[word_lower]
+    if word_lower in COMMON_TYPOS:
+        correct_form = COMMON_TYPOS[word_lower]
         # Preserve original capitalization
         if word[0].isupper():
             correct_form = correct_form[0].upper() + correct_form[1:]
@@ -158,28 +161,9 @@ def get_suggestions(word, max_suggestions=None):
         return suggestions[:max_suggestions]
     
     # Check for contractions
-    contractions = {
-        'dont': "don't", 'doesnt': "doesn't", 'didnt': "didn't",
-        'wont': "won't", 'cant': "can't", 'couldnt': "couldn't",
-        'wouldnt': "wouldn't", 'shouldnt': "shouldn't",
-        'isnt': "isn't", 'arent': "aren't", 'wasnt': "wasn't",
-        'werent': "weren't", 'hasnt': "hasn't", 'havent': "haven't",
-        'hadnt': "hadn't", 'shant': "shan't",
-        'ive': "I've", 'youve': "you've", 'weve': "we've",
-        'theyve': "they've", 'youre': "you're", 'theyre': "they're",
-        'were': "we're", 'im': "I'm", 'hes': "he's", 'shes': "she's",
-        'its': "it's", 'thats': "that's", 'whats': "what's",
-        'wheres': "where's", 'whos': "who's", 'hows': "how's",
-        'theres': "there's", 'heres': "here's",
-        'id': "I'd", 'hed': "he'd", 'shed': "she'd", 'wed': "we'd",
-        'theyd': "they'd", 'youd': "you'd",
-        'ill': "I'll", 'youll': "you'll", 'hell': "he'll",
-        'shell': "she'll", 'well': "we'll", 'theyll': "they'll",
-    }
-    
     # If it's a known contraction without apostrophe, return the correct form first
-    if word_lower in contractions:
-        correct_form = contractions[word_lower]
+    if word_lower in CONTRACTIONS:
+        correct_form = CONTRACTIONS[word_lower]
         # Preserve original capitalization pattern
         if word[0].isupper():
             correct_form = correct_form[0].upper() + correct_form[1:]
@@ -297,6 +281,58 @@ def check_input_timer(userdata):
         context_key = get_context_key()
         input_text = hexchat.get_info("inputbox") or ""
         prev_input = previous_input.get(context_key, "")
+        
+        # Detect /fix command in input (before Enter is pressed)
+        # Process corrections and remove /fix from input
+        if input_text.strip().endswith('/fix') and not prev_input.strip().endswith('/fix'):
+            # Remove /fix from the text
+            text_without_fix = re.sub(r'\s*/fix\s*$', '', input_text).strip()
+            
+            if text_without_fix:
+                words = text_without_fix.split()
+                replacements = []
+                
+                for i, w in enumerate(words):
+                    clean_word = w.strip('.,!?;:\'"')
+                    if len(clean_word) >= config['min_word_length'] and clean_word.isalpha():
+                        if not check_word(clean_word):
+                            suggestions = get_suggestions(clean_word, 1)
+                            if suggestions:
+                                replacements.append({
+                                    'position': i,
+                                    'old': clean_word,
+                                    'new': suggestions[0],
+                                    'original': w
+                                })
+                
+                if replacements:
+                    new_words = words[:]
+                    for rep in replacements:
+                        old_word = rep['original']
+                        new_word = old_word.replace(rep['old'], rep['new'])
+                        new_words[rep['position']] = new_word
+                        hexchat.prnt(f"\00303✓ '{rep['old']}' → '{rep['new']}'\003")
+                    
+                    new_text = ' '.join(new_words)
+                    cursor_pos = len(new_text)
+                    
+                    hexchat.command(f"settext {new_text}")
+                    hexchat.command(f"setcursor {cursor_pos}")
+                    
+                    if context_key in detected_errors:
+                        del detected_errors[context_key]
+                    if context_key in pending_correction:
+                        del pending_correction[context_key]
+                    
+                    previous_input[context_key] = new_text
+                    return 1
+                else:
+                    hexchat.prnt("\00303No misspelled words found!\003")
+                    # Remove /fix from input anyway
+                    hexchat.command(f"settext {text_without_fix}")
+                    hexchat.command(f"setcursor {len(text_without_fix)}")
+                    previous_input[context_key] = text_without_fix
+                    return 1
         
         # Auto-fix on double-space - simple version that works with pending correction
         if input_text.endswith('  ') and not prev_input.endswith('  '):
@@ -466,8 +502,12 @@ def cmd_spellfix(word, word_eol, userdata):
     context_key = get_context_key()
     input_text = hexchat.get_info("inputbox") or ""
     
+    # Remove the /fix command itself if it's in the input
+    # This handles cases where user types "text /fix" and presses Enter
+    input_text = re.sub(r'\s*/fix\s*$', '', input_text)
+    
     if not input_text.strip():
-        hexchat.prnt("Input is empty")
+        hexchat.prnt("Input is empty - nothing to fix")
         return hexchat.EAT_ALL
     
     words = input_text.split()
@@ -498,8 +538,6 @@ def cmd_spellfix(word, word_eol, userdata):
         hexchat.prnt(f"\00303✓ '{rep['old']}' → '{rep['new']}'\003")
     
     new_text = ' '.join(new_words)
-    if input_text.endswith(' '):
-        new_text += ' '
     
     cursor_pos = len(new_text)
     hexchat.command(f"settext {new_text}")
@@ -610,15 +648,15 @@ else:
         hexchat.prnt("  4. Accept: \00302SPACE SPACE\003")
         hexchat.prnt("")
         hexchat.prnt("  \002Quick fix (no cycling):\002")
-        hexchat.prnt("  • Type your sentence with errors")
-        hexchat.prnt("  • Type: \00302/fix\003")
-        hexchat.prnt("  • All errors fixed instantly!")
+        hexchat.prnt("  • Type: I dont know si teh thing \00302/fix\003")
+        hexchat.prnt("  • Press Enter - all errors fixed instantly!")
+        hexchat.prnt("  • (The \00302/fix\003 gets removed automatically)")
         hexchat.prnt("")
         hexchat.prnt("  \002Controls:\002")
-        hexchat.prnt("  • \00302Ctrl+→\003 or \00302/next\003 = cycle forward")
-        hexchat.prnt("  • \00302Ctrl+←\003 or \00302/prev\003 = cycle backward")
-        hexchat.prnt("  • \00302SPACE SPACE\003 = accept [bracketed] word")
-        hexchat.prnt("  • \00302/fix\003 = fix everything at once")
+        hexchat.prnt("  • \00302Ctrl+→\003 or \00302/next\003 = cycle forward through suggestions")
+        hexchat.prnt("  • \00302Ctrl+←\003 or \00302/prev\003 = cycle backward through suggestions")
+        hexchat.prnt("  • \00302SPACE SPACE\003 = accept the [bracketed] suggestion")
+        hexchat.prnt("  • \00302/fix\003 at end of line = fix all errors at once")
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
