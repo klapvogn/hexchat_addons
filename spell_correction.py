@@ -109,7 +109,9 @@ def init_spell_checker(dict_lang=None):
     except enchant.errors.DictNotFoundError:
         hexchat.prnt(f"Dictionary '{dict_lang}' not found. Available dictionaries:")
         for d in enchant.list_dicts():
-            hexchat.prnt(f"  - {d.tag}")
+            # enchant.list_dicts() returns tuples: (tag, provider)
+            tag = d[0] if isinstance(d, tuple) else d.tag
+            hexchat.prnt(f"  - {tag}")
         return False
 
 
@@ -583,17 +585,23 @@ def cmd_spellcheck(word, word_eol, userdata):
 def cmd_spelldict(word, word_eol, userdata):
     """Change spell checking dictionary"""
     if len(word) < 2:
-        hexchat.prnt(f"Current dictionary: {current_dict}")
+        # List available dictionaries
+        hexchat.prnt(f"\00303Current dictionary: {current_dict}\003")
         hexchat.prnt("Available dictionaries:")
         if enchant:
             for d in enchant.list_dicts():
-                hexchat.prnt(f"  - {d.tag}")
-        hexchat.prnt("Usage: /spelldict <language>")
+                # enchant.list_dicts() returns tuples: (tag, provider)
+                tag = d[0] if isinstance(d, tuple) else d.tag
+                provider = d[1] if isinstance(d, tuple) else str(d.provider)
+                hexchat.prnt(f"  \00302{tag}\003 ({provider})")
+        hexchat.prnt("Usage: \00302/spelldict <language>\003")
+        hexchat.prnt("Example: \00302/spelldict en_US\003")
         return hexchat.EAT_ALL
     
+    # Change to specified dictionary
     new_dict = word[1]
     if init_spell_checker(new_dict):
-        hexchat.prnt(f"Dictionary changed to: {new_dict}")
+        hexchat.prnt(f"\00303Dictionary changed to: {new_dict}\003")
     
     return hexchat.EAT_ALL
 
