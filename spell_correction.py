@@ -5,7 +5,6 @@ HexChat Spell Correction Script - Auto-correction with bidirectional cycling
 Workflow:
 1. Type a word and press SPACE - suggestions appear if misspelled
 2. Press Ctrl+Right Arrow (forward) or Ctrl+Left Arrow (backward) to cycle
-   Or use /next and /prev commands
 3. Press SPACE SPACE (double-space) - uses the selected suggestion
 4. Or use /fix to correct all errors at once
 
@@ -13,7 +12,7 @@ Simple and effective!
 """
 
 __module_name__ = "spell_correction"
-__module_version__ = "3.8"
+__module_version__ = "4.0"
 __module_description__ = "Auto spell correction with common typo detection (si→is, fo→of, etc.)"
 
 try:
@@ -91,7 +90,7 @@ def get_context_key():
     return f"{network}:{channel}"
 
 
-def init_spell_checker(dict_lang=None):
+def init_spell_checker(dict_lang=None, quiet=False):
     """Initialize the spell checker with specified dictionary"""
     global spell_checker, current_dict
     
@@ -102,9 +101,40 @@ def init_spell_checker(dict_lang=None):
         dict_lang = current_dict
     
     try:
-        spell_checker = enchant.Dict(dict_lang)
+        # Use personal word list (PWL) file in HexChat config directory
+        import os
+        hexchat_config = hexchat.get_info("configdir")
+        pwl_path = os.path.join(hexchat_config, "hexchat_personal_dict.txt")
+        
+        # Create the file if it doesn't exist
+        file_created = False
+        if not os.path.exists(pwl_path):
+            with open(pwl_path, 'w') as f:
+                f.write("")
+            file_created = True
+        
+        # Count words in personal dictionary
+        word_count = 0
+        if os.path.exists(pwl_path):
+            with open(pwl_path, 'r') as f:
+                word_count = sum(1 for line in f if line.strip())
+        
+        # Initialize with personal word list
+        spell_checker = enchant.DictWithPWL(dict_lang, pwl_path)
         current_dict = dict_lang
-        hexchat.prnt(f"Spell checker initialized with dictionary: {dict_lang}")
+        
+        # Only show messages if not quiet mode
+        if not quiet:
+            hexchat.prnt(f"Spell checker initialized with dictionary: {dict_lang}")
+            hexchat.prnt(f"Personal dictionary: {pwl_path}")
+            if word_count > 0:
+                hexchat.prnt(f"Personal dictionary contains {word_count} word(s)")
+            else:
+                hexchat.prnt("Personal dictionary is empty")
+        elif file_created:
+            # Show file location only when first created
+            hexchat.prnt(f"Personal dictionary created: {pwl_path}")
+        
         return True
     except enchant.errors.DictNotFoundError:
         hexchat.prnt(f"Dictionary '{dict_lang}' not found. Available dictionaries:")
@@ -470,7 +500,7 @@ def check_input_timer(userdata):
                                     first_sugg = f"\00303[{suggestions[0]}]\003"  # Brackets around first
                                     other_suggs = ", ".join(suggestions[1:])
                                     hexchat.prnt(f"\00304{last_word}\003 → {first_sugg}, {other_suggs}")
-                                    hexchat.prnt("↳ \00302SPACE SPACE\003 = accept | \00302Ctrl+Arrow\003 or \00302/next\003/\00302/prev\003 = cycle")
+                                    hexchat.prnt("↳ \00302SPACE SPACE\003 = accept | \00302Ctrl+Arrow\003 = cycle")
             
             elif context_key in pending_correction and not input_text.endswith(' '):
                 del pending_correction[context_key]
@@ -600,8 +630,42 @@ def cmd_spelldict(word, word_eol, userdata):
     
     # Change to specified dictionary
     new_dict = word[1]
-    if init_spell_checker(new_dict):
+    if init_spell_checker(new_dict, quiet=False):
         hexchat.prnt(f"\00303Dictionary changed to: {new_dict}\003")
+    
+    return hexchat.EAT_ALL
+
+
+def cmd_spelladd(word, word_eol, userdata):
+    """Add word to personal dictionary"""
+    if len(word) < 2:
+        hexchat.prnt("Usage: /addword <word>")
+        return hexchat.EAT_ALL
+    
+    word_to_add = word[1].strip()
+    
+    try:
+        import os
+        hexchat_config = hexchat.get_info("configdir")
+        pwl_path = os.path.join(hexchat_config, "hexchat_personal_dict.txt")
+        
+        # Check if word already exists
+        existing_words = set()
+        if os.path.exists(pwl_path):
+            with open(pwl_path, 'r') as f:
+                existing_words = set(line.strip() for line in f if line.strip())
+        
+        if word_to_add in existing_words:
+            hexchat.prnt(f"'{word_to_add}' is already in personal dictionary")
+        else:
+            with open(pwl_path, 'a') as f:
+                f.write(f"{word_to_add}\n")
+            hexchat.prnt(f"\00303Word '{word_to_add}' has been added to your personal dictionary\003")
+            
+            # Reinitialize to load the new word (quietly)
+            init_spell_checker(quiet=True)
+    except Exception as e:
+        hexchat.prnt(f"Error adding word: {e}")
     
     return hexchat.EAT_ALL
 
@@ -640,19 +704,18 @@ if SPELL_ENGINE is None:
     hexchat.prnt(f"{__module_name__} loaded but spell checking disabled")
     hexchat.prnt("Install pyenchant: pip install pyenchant")
 else:
-    if init_spell_checker():
+    if init_spell_checker(quiet=False):
         hexchat.prnt(f"{__module_name__} version {__module_version__} loaded")
         check_timer = hexchat.hook_timer(config['check_delay'], check_input_timer)
         hexchat.prnt("")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
-        hexchat.prnt("\00303      SPELL CHECKER - EASY VERSION\003")
+        hexchat.prnt("\00303            SPELL CHECKER                  \003")
         hexchat.prnt("\00303═══════════════════════════════════════════\003")
         hexchat.prnt("")
         hexchat.prnt("  \002Simple workflow:\002")
         hexchat.prnt("  1. Type: I dont know")
         hexchat.prnt("  2. See: \00304dont\003 → \00303[don't]\003, font, dint")
         hexchat.prnt("  3. Cycle: \00302Ctrl+→\003 (next) or \00302Ctrl+←\003 (prev)")
-        hexchat.prnt("     Or type: \00302/next\003 or \00302/prev\003")
         hexchat.prnt("  4. Accept: \00302SPACE SPACE\003")
         hexchat.prnt("")
         hexchat.prnt("  \002Quick fix (no cycling):\002")
@@ -660,9 +723,13 @@ else:
         hexchat.prnt("  • Press Enter - all errors fixed instantly!")
         hexchat.prnt("  • (The \00302/fix\003 gets removed automatically)")
         hexchat.prnt("")
+        hexchat.prnt("  \002Personal Dictionary:\002")
+        hexchat.prnt("  • \00302/addword <word>\003 = add word (e.g., /addword speedtest)")
+        hexchat.prnt("  • Words saved to: hexchat_personal_dict.txt in HexChat config")
+        hexchat.prnt("")
         hexchat.prnt("  \002Controls:\002")
-        hexchat.prnt("  • \00302Ctrl+→\003 or \00302/next\003 = cycle forward through suggestions")
-        hexchat.prnt("  • \00302Ctrl+←\003 or \00302/prev\003 = cycle backward through suggestions")
+        hexchat.prnt("  • \00302Ctrl+→\003 = cycle forward through suggestions")
+        hexchat.prnt("  • \00302Ctrl+←\003 = cycle backward through suggestions")
         hexchat.prnt("  • \00302SPACE SPACE\003 = accept the [bracketed] suggestion")
         hexchat.prnt("  • \00302/fix\003 at end of line = fix all errors at once")
         hexchat.prnt("")
@@ -679,6 +746,7 @@ hexchat.hook_command("previous", cmd_prev_suggestion, help="Cycle to previous sp
 hexchat.hook_command("fix", cmd_spellfix, help="Fix all misspelled words")
 hexchat.hook_command("spellcheck", cmd_spellcheck, help="Check spelling")
 hexchat.hook_command("spelldict", cmd_spelldict, help="Change dictionary")
+hexchat.hook_command("addword", cmd_spelladd, help="Add word to personal dictionary")
 hexchat.hook_command("spelltoggle", cmd_spelltoggle, help="Toggle spell checking")
 
 # Try to hook key press events (may not work in all HexChat versions)
