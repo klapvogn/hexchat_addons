@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNC Log Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dce0e6;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        button.secondary {
+            background: #95a5a6;
+        }
+        
+        button.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .search-grid .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .search-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        
+        .result-meta {
+            color: #6c757d;
+            font-size: 12px;
+            margin-bottom: 6px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .result-meta span {
+            display: inline-block;
+        }
+        
+        .result-content {
+            color: #212529;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .info-banner {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .stats {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+        
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Section -->
+        <div id="login-section">
+            <header>
+                <h1>🔍 ZNC Log Search - Login</h1>
+            </header>
+            
+            <div class="card">
+                <div id="login-error" class="error hidden"></div>
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" onkeypress="handleLoginKey(event)">
+                </div>
+                
+                <button onclick="login()">Login</button>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div id="search-section" class="hidden">
+            <header>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1>🔍 ZNC Log Search</h1>
+                    <button class="secondary" onclick="logout()">Logout</button>
+                </div>
+            </header>
+            
+            <div class="card">
+                <h2 style="margin-bottom: 15px; color: #2c3e50;">Search IRC Logs</h2>
+                
+                <div class="search-grid">
+                    <div class="form-group">
+                        <label for="network">Network *</label>
+                        <select id="network" onchange="loadChannels()">
+                            <option value="">-- Select Network --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="channel">Channel (optional - leave blank to search all)</label>
+                        <select id="channel">
+                            <option value="">-- All Channels --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="query">Search Query *</label>
+                        <input type="text" id="query" placeholder="Enter text to search for...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="start-date">Start Date (optional)</label>
+                        <input type="date" id="start-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="end-date">End Date (optional)</label>
+                        <input type="date" id="end-date">
+                    </div>
+                </div>
+                
+                <div class="search-actions">
+                    <button onclick="search()">🔍 Search</button>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="case-sensitive">
+                        <label for="case-sensitive" style="margin-bottom: 0;">Case sensitive</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results" class="hidden">
+                <div class="card">
+                    <div id="loading" class="hidden">
+                        <div class="loader"></div>
+                        <p style="text-align: center; color: #6c757d;">Searching logs...</p>
+                    </div>
+                    
+                    <div id="result-stats" class="stats hidden"></div>
+                    <div id="result-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle Enter key in password field
+        function handleLoginKey(event) {
+            if (event.key === 'Enter') {
+                login();
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (!username || !password) {
+                errorDiv.textContent = 'Please enter both username and password';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                
+                if (response.ok) {
+                    document.getElementById('login-section').classList.add('hidden');
+                    document.getElementById('search-section').classList.remove('hidden');
+                    loadNetworks();
+                } else {
+                    errorDiv.textContent = 'Invalid username or password';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Connection error. Please try again.';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            await fetch('/api/logout', {method: 'POST'});
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('search-section').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function loadNetworks() {
+            try {
+                const response = await fetch('/api/networks');
+                const data = await response.json();
+                
+                const select = document.getElementById('network');
+                select.innerHTML = '<option value="">-- Select Network --</option>';
+                
+                data.networks.forEach(network => {
+                    const option = document.createElement('option');
+                    option.value = network.id;
+                    option.textContent = network.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading networks:', error);
+            }
+        }
+
+        async function loadChannels() {
+            const network = document.getElementById('network').value;
+            const select = document.getElementById('channel');
+            
+            select.innerHTML = '<option value="">-- All Channels --</option>';
+            
+            if (!network) return;
+            
+            try {
+                const response = await fetch(`/api/channels/${network}`);
+                const data = await response.json();
+                
+                data.channels.forEach(channel => {
+                    const option = document.createElement('option');
+                    option.value = channel;
+                    option.textContent = channel;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading channels:', error);
+            }
+        }
+
+        async function search() {
+            const query = document.getElementById('query').value;
+            const network = document.getElementById('network').value;
+            const channel = document.getElementById('channel').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const caseSensitive = document.getElementById('case-sensitive').checked;
+            
+            if (!query.trim()) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            if (!network) {
+                alert('Please select a network');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result-stats').classList.add('hidden');
+            document.getElementById('result-list').innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        query,
+                        network,
+                        channel,
+                        start_date: startDate,
+                        end_date: endDate,
+                        case_sensitive: caseSensitive
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').classList.add('hidden');
+                
+                // Show stats
+                const statsDiv = document.getElementById('result-stats');
+                let statsText = `Found ${data.total} result${data.total !== 1 ? 's' : ''}`;
+                if (data.truncated) {
+                    statsText += ' (limited to 1000 results)';
+                }
+                statsDiv.textContent = statsText;
+                statsDiv.classList.remove('hidden');
+                
+                // Display results
+                const resultList = document.getElementById('result-list');
+                
+                if (data.results.length === 0) {
+                    resultList.innerHTML = '<p style="color: #6c757d; padding: 20px; text-align: center;">No results found</p>';
+                } else {
+                    data.results.forEach(result => {
+                        const div = document.createElement('div');
+                        div.className = 'result';
+                        div.innerHTML = `
+                            <div class="result-meta">
+                                <span><strong>${escapeHtml(result.network)}</strong></span>
+                                <span>${escapeHtml(result.channel)}</span>
+                                <span>${escapeHtml(result.file)}</span>
+                                <span>Line ${result.line}</span>
+                            </div>
+                            <div class="result-content">${escapeHtml(result.content)}</div>
+                        `;
+                        resultList.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('result-list').innerHTML = 
+                    '<p class="error">Error performing search. Please try again.</p>';
+                console.error('Search error:', error);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
