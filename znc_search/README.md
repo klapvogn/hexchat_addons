@@ -202,11 +202,11 @@ Edit `app.py` lines 17-23 to customize network display names:
 
 ```python
 NETWORK_NAMES = {
-    'torrentleech': 'TL',
-    'oldboys': 'OB',
-    'codetheworld': 'CTW',
-    'libera': 'Libera',
-    'omg': 'omg'
+    'NETWORK1': 'SHORT NAME1',
+    'NETWORK2': 'SHORT NAME2',
+    'NETWORK3': 'SHORT NAME3',
+    'NETWORK4': 'SHORT NAME4',
+    'NETWORK5': 'SHORT NAME5',
 }
 ```
 
