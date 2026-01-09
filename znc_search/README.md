@@ -5,7 +5,7 @@ A web-based search interface for ZNC IRC logs with authentication, multi-network
 ## Features
 
 - 🔐 Secure login authentication
-- 🌐 Multi-network support (TL, OB, CTW, Libera, omg)
+- 🌐 Multi-network
 - 📁 Search specific channels or all channels
 - 📅 Date range filtering
 - 🔤 Case-sensitive/insensitive search
@@ -35,17 +35,17 @@ sudo apt install python3 python3-pip python3-venv -y
 
 ```bash
 # Create venv directory if it doesn't exist
-mkdir -p /home/klapvogn/venvs
+mkdir -p /home/<USERNAME>/venvs
 
 # Create virtual environment
-python3 -m venv /home/klapvogn/venvs/HexChat-Search
+python3 -m venv /home/<USERNAME>/venvs/HexChat-Search
 ```
 
 ### 3. Install Python Packages
 
 ```bash
 # Activate virtual environment
-source /home/klapvogn/venvs/HexChat-Search/bin/activate
+source /home/<USERNAME>/venvs/HexChat-Search/bin/activate
 
 # Install required packages
 pip install --upgrade pip
@@ -58,23 +58,23 @@ pip install gunicorn==21.2.0
 
 ```bash
 # Create application directory
-mkdir -p /home/klapvogn/apps/znc_log_search
-mkdir -p /home/klapvogn/apps/znc_log_search/templates
+mkdir -p /home/<USERNAME>/apps/znc_log_search
+mkdir -p /home/<USERNAME>/apps/znc_log_search/templates
 
 # Navigate to directory
-cd /home/klapvogn/apps/znc_log_search
+cd /home/<USERNAME>/apps/znc_log_search
 ```
 
 ### 5. Copy Application Files
 
-Place these files in `/home/klapvogn/apps/znc_log_search/`:
+Place these files in `/home/<USERNAME>/apps/znc_log_search/`:
 - `app.py` - Main Flask application
 - `templates/index.html` - Web interface
 - `znc-search.service` - Systemd service file
 
 Directory structure:
 ```
-/home/klapvogn/apps/znc_log_search/
+/home/<USERNAME>/apps/znc_log_search/
 ├── app.py
 ├── templates/
 │   └── index.html
@@ -98,7 +98,7 @@ Enable the log module for each network:
 
 Verify logs exist:
 ```bash
-ls -la /home/klapvogn/.znc/users/klapvogn/networks/*/moddata/log/
+ls -la /home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/
 ```
 
 ### 7. Configure Application
@@ -110,7 +110,7 @@ Edit `app.py` and set your password:
 python3 -c "import hashlib; print(hashlib.sha256('YourPasswordHere'.encode()).hexdigest())"
 
 # Edit app.py
-nano /home/klapvogn/apps/znc_log_search/app.py
+nano /home/<USERNAME>/apps/znc_log_search/app.py
 ```
 
 Update line 25 with your password hash:
@@ -124,10 +124,10 @@ USERS = {
 
 ```bash
 # Activate venv
-source /home/klapvogn/venvs/HexChat-Search/bin/activate
+source /home/<USERNAME>/venvs/HexChat-Search/bin/activate
 
 # Run with Gunicorn
-cd /home/klapvogn/apps/znc_log_search
+cd /home/<USERNAME>/apps/znc_log_search
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
@@ -139,7 +139,7 @@ Press `CTRL+C` to stop when done testing.
 
 ```bash
 # Copy service file
-sudo cp /home/klapvogn/apps/znc_log_search/znc-search.service /etc/systemd/system/
+sudo cp /home/<USERNAME>/apps/znc_log_search/znc-search.service /etc/systemd/system/
 
 # Reload systemd
 sudo systemctl daemon-reload
@@ -185,13 +185,13 @@ journalctl -u znc-search -n 100 --no-pager
 journalctl -u znc-search -n 50 --no-pager
 
 # Verify gunicorn path
-ls -la /home/klapvogn/venvs/HexChat-Search/bin/gunicorn
+ls -la /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn
 
 # Test manually
-sudo -u klapvogn /home/klapvogn/venvs/HexChat-Search/bin/gunicorn --version
+sudo -u <USERNAME> /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn --version
 
 # Check permissions
-ls -la /home/klapvogn/apps/znc_log_search/
+ls -la /home/<USERNAME>/apps/znc_log_search/
 ```
 
 ## Configuration
@@ -217,7 +217,7 @@ NETWORK_NAMES = {
 python3 -c "import hashlib; print(hashlib.sha256('NewPassword'.encode()).hexdigest())"
 
 # Edit app.py and update line 25
-nano /home/klapvogn/apps/znc_log_search/app.py
+nano /home/<USERNAME>/apps/znc_log_search/app.py
 
 # Restart service
 sudo systemctl restart znc-search
@@ -228,7 +228,7 @@ sudo systemctl restart znc-search
 Edit `znc-search.service` and change the port in the `ExecStart` line:
 
 ```ini
-ExecStart=/home/klapvogn/venvs/HexChat-Search/bin/gunicorn -w 4 -b 0.0.0.0:8080 app:app
+ExecStart=/home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn -w 4 -b 0.0.0.0:8080 app:app
 ```
 
 Then reload:
@@ -346,7 +346,7 @@ sudo certbot --nginx -d your-domain.com
 ### No Networks Showing
 - Verify ZNC base path in `app.py` line 14
 - Check log module is loaded in ZNC: `/msg *status ListMods`
-- Verify log directories exist: `ls -la /home/klapvogn/.znc/users/klapvogn/networks/*/moddata/log/`
+- Verify log directories exist: `ls -la /home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/`
 
 ### No Search Results
 - Check if log files exist in the channel directory
@@ -355,27 +355,27 @@ sudo certbot --nginx -d your-domain.com
 - Check date range isn't excluding files
 
 ### Service Won't Start (203/EXEC Error)
-- Verify gunicorn path: `ls -la /home/klapvogn/venvs/HexChat-Search/bin/gunicorn`
+- Verify gunicorn path: `ls -la /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn`
 - Check service file: `cat /etc/systemd/system/znc-search.service`
-- Test manually: `sudo -u klapvogn /home/klapvogn/venvs/HexChat-Search/bin/gunicorn --version`
-- Check permissions: `chmod +x /home/klapvogn/venvs/HexChat-Search/bin/gunicorn`
+- Test manually: `sudo -u <USERNAME> /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn --version`
+- Check permissions: `chmod +x /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn`
 
 ### Permission Denied Errors
 ```bash
 # Fix ownership
-sudo chown -R klapvogn:klapvogn /home/klapvogn/apps/znc_log_search
-sudo chown -R klapvogn:klapvogn /home/klapvogn/venvs/HexChat-Search
+sudo chown -R <USERNAME>:<USERNAME> /home/<USERNAME>/apps/znc_log_search
+sudo chown -R <USERNAME>:<USERNAME> /home/<USERNAME>/venvs/HexChat-Search
 
 # Fix permissions
-chmod 755 /home/klapvogn/apps/znc_log_search
-chmod 644 /home/klapvogn/apps/znc_log_search/app.py
+chmod 755 /home/<USERNAME>/apps/znc_log_search
+chmod 644 /home/<USERNAME>/apps/znc_log_search/app.py
 ```
 
 ## File Locations
 
-- **Application**: `/home/klapvogn/apps/znc_log_search/`
-- **Virtual Environment**: `/home/klapvogn/venvs/HexChat-Search/`
-- **ZNC Logs**: `/home/klapvogn/.znc/users/klapvogn/networks/*/moddata/log/`
+- **Application**: `/home/<USERNAME>/apps/znc_log_search/`
+- **Virtual Environment**: `/home/<USERNAME>/venvs/HexChat-Search/`
+- **ZNC Logs**: `/home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/`
 - **Service File**: `/etc/systemd/system/znc-search.service`
 - **Nginx Config**: `/etc/nginx/sites-available/znc-search` (if using nginx)
 
@@ -393,7 +393,7 @@ chmod 644 /home/klapvogn/apps/znc_log_search/app.py
 sudo systemctl stop znc-search
 
 # Update app.py or other files
-nano /home/klapvogn/apps/znc_log_search/app.py
+nano /home/<USERNAME>/apps/znc_log_search/app.py
 
 # Restart service
 sudo systemctl start znc-search
@@ -403,10 +403,10 @@ sudo systemctl start znc-search
 
 ```bash
 # Backup application
-tar -czf znc-search-backup-$(date +%Y%m%d).tar.gz /home/klapvogn/apps/znc_log_search/
+tar -czf znc-search-backup-$(date +%Y%m%d).tar.gz /home/<USERNAME>/apps/znc_log_search/
 
 # Backup ZNC logs (optional)
-tar -czf znc-logs-backup-$(date +%Y%m%d).tar.gz /home/klapvogn/.znc/users/klapvogn/networks/
+tar -czf znc-logs-backup-$(date +%Y%m%d).tar.gz /home/<USERNAME>/.znc/users/<USERNAME>/networks/
 ```
 
 ## Uninstall
@@ -421,10 +421,10 @@ sudo rm /etc/systemd/system/znc-search.service
 sudo systemctl daemon-reload
 
 # Remove application
-rm -rf /home/klapvogn/apps/znc_log_search/
+rm -rf /home/<USERNAME>/apps/znc_log_search/
 
 # Remove virtual environment (optional)
-rm -rf /home/klapvogn/venvs/HexChat-Search/
+rm -rf /home/<USERNAME>/venvs/HexChat-Search/
 ```
 
 ## Support
