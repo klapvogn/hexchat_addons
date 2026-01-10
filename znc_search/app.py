@@ -7,25 +7,24 @@ from functools import wraps
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'CHANGE THIS'  # CHANGE THIS!
+app.secret_key = 'CHANGE_IT_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 CORS(app)
 
 # Configuration
-ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/<USERNAME>/networks'
+ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/klapvogn/networks'
 
-# Network display name mapping (folder_name: display_name)
-# CHANGE BELOW
-NETWORK_NAMES = {
-    'NETWORK1': 'SHORT NAME1',
-    'NETWORK2': 'SHORT NAME2',
-    'NETWORK3': 'SHORT NAME3',
-    'NETWORK4': 'SHORT NAME4',
-    'NETWORK5': 'SHORT NAME5',
-}
+# Network display name mapping (OPTIONAL - leave empty for automatic detection)
+# Add entries here ONLY if you want custom short names
+# Example:
+#NETWORK_NAMES = {
+#    'NETWORK1': 'SHORT NAME1',
+#}
+NETWORK_NAMES = {}
 
-# User authentication (use proper hashed passwords!)
+# User authentication
+# Generate hash with: python3 -c "import hashlib; print(hashlib.sha256('YourPassword'.encode()).hexdigest())"
 USERS = {
-'admin': 'CHANGE THIS'
+    'admin': 'CHANGE_IT_TO_YOUR_KEY'
 }
 
 def login_required(f):
@@ -63,16 +62,18 @@ def logout():
 @app.route('/api/networks', methods=['GET'])
 @login_required
 def get_networks():
-    """List available networks with display names"""
+    """List available networks - auto-detects all networks with logging enabled"""
     networks = []
     
     if os.path.exists(ZNC_BASE_PATH):
         for item in os.listdir(ZNC_BASE_PATH):
             network_path = os.path.join(ZNC_BASE_PATH, item, 'moddata/log')
             if os.path.exists(network_path):
+                # Use custom display name if defined in NETWORK_NAMES, otherwise capitalize folder name
+                display_name = NETWORK_NAMES.get(item, item.capitalize())
                 networks.append({
                     'id': item,
-                    'name': NETWORK_NAMES.get(item, item)  # Use display name or folder name
+                    'name': display_name
                 })
     
     # Sort by display name
@@ -154,14 +155,17 @@ def search_logs():
             if not log_file.endswith('.log'):
                 continue
             
-            # Parse date from filename (ZNC formats: YYYY-MM-DD.log or channel_YYYYMMDD.log)
+            # Parse date from filename (handles both ZNC formats)
+            # Format 1: 2025-12-04.log (YYYY-MM-DD)
+            # Format 2: channel_20251204.log (channel_YYYYMMDD)
             try:
                 date_str = log_file.replace('.log', '')
+                
                 # Try format with dashes first (2025-12-04)
                 try:
                     file_date = datetime.strptime(date_str, '%Y-%m-%d')
                 except ValueError:
-                    # Try format without dashes (20251204)
+                    # Try format without dashes (20251204 or channel_20251204)
                     date_str = date_str.split('_')[-1]
                     file_date = datetime.strptime(date_str, '%Y%m%d')
                 
@@ -172,6 +176,7 @@ def search_logs():
                     continue
                     
             except (ValueError, IndexError):
+                # Skip files that don't match expected date formats
                 continue
             
             # Search within file
@@ -187,8 +192,11 @@ def search_logs():
                             match = query.lower() in line.lower()
                         
                         if match:
+                            # Use custom network name if defined, otherwise use folder name
+                            network_display = NETWORK_NAMES.get(network, network.capitalize())
+                            
                             results.append({
-                                'network': NETWORK_NAMES.get(network, network),
+                                'network': network_display,
                                 'channel': channel_name,
                                 'file': log_file,
                                 'line': line_num,
