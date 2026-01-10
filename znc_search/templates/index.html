@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZNC Log Search</title>
+    <title>Search IRC Logs</title>
     <style>
         * {
             margin: 0;
@@ -14,152 +14,294 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: #f5f7fa;
-            line-height: 1.6;
+            padding: 20px;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        header {
+        .main-header {
             background: #2c3e50;
             color: white;
-            padding: 20px;
-            margin: -20px -20px 20px -20px;
+            padding: 20px 30px;
             border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
         }
         
-        header h1 {
+        .main-header h1 {
+            margin: 0;
             font-size: 24px;
             font-weight: 600;
         }
         
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
+        .main-content {
+            padding: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .form-group {
-            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
         }
         
         label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="date"],
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-wrapper label {
+            margin: 0;
+            cursor: pointer;
+        }
+        
+        .results-container {
+            margin-top: 30px;
+        }
+        
+        .results-header {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            color: #2e7d32;
+        }
+        
+        .result-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        
+        .result-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .result-header {
+            padding: 12px 15px;
+            background-color: #fafafa;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-header:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .result-meta {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .result-content {
+            padding: 12px 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+        }
+        
+        .context-container {
+            display: none;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+            padding: 15px;
+        }
+        
+        .context-container.visible {
+            display: block;
+        }
+        
+        .context-loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .context-line {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 2px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .line-number {
+            color: #999;
+            min-width: 50px;
+            text-align: right;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        
+        .line-content {
+            flex: 1;
+            word-break: break-word;
+        }
+        
+        .context-line.matched {
+            background-color: #fff9c4;
+            font-weight: 600;
+        }
+        
+        .expand-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        
+        .expand-btn {
+            padding: 6px 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .expand-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .expand-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .login-container {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+        
+        .login-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .login-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .login-card .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .login-card label {
             display: block;
             margin-bottom: 5px;
             font-weight: 500;
             color: #34495e;
         }
         
-        input[type="text"],
-        input[type="password"],
-        input[type="date"],
-        select {
+        .login-card input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #dce0e6;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.3s;
         }
         
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: #3498db;
+        .login-card button {
+            width: 100%;
         }
         
-        button {
-            background: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        button:hover {
-            background: #2980b9;
-        }
-        
-        button.secondary {
-            background: #95a5a6;
-        }
-        
-        button.secondary:hover {
-            background: #7f8c8d;
-        }
-        
-        .search-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        
-        .search-grid .full-width {
-            grid-column: 1 / -1;
-        }
-        
-        .search-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-        
-        .result {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 13px;
-        }
-        
-        .result-meta {
-            color: #6c757d;
-            font-size: 12px;
-            margin-bottom: 6px;
-            display: flex;
-            gap: 15px;
-        }
-        
-        .result-meta span {
-            display: inline-block;
-        }
-        
-        .result-content {
-            color: #212529;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-        }
-        
-        .info-banner {
-            background: #e8f4f8;
-            border-left: 4px solid #3498db;
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .error {
+        .login-error {
             background: #fee;
             color: #c33;
             padding: 10px;
@@ -167,309 +309,397 @@
             margin-bottom: 15px;
         }
         
+        .error {
+            color: #d32f2f;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
         .hidden {
             display: none;
         }
         
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+        .logout-btn {
+            background-color: #e74c3c;
+            padding: 8px 16px;
+            font-size: 13px;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .stats {
-            background: #e8f4f8;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            color: #2c3e50;
-        }
-        
-        @media (max-width: 768px) {
-            .search-grid {
-                grid-template-columns: 1fr;
-            }
+        .logout-btn:hover {
+            background-color: #c0392b;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Login Section -->
-        <div id="login-section">
-            <header>
-                <h1>🔍 ZNC Log Search - Login</h1>
-            </header>
+    <div id="loginForm" class="login-container">
+        <div class="login-header">
+            <h1>🔍 IRC Log Search - Login</h1>
+        </div>
+        <div class="login-card">
+            <div id="loginError" class="login-error hidden"></div>
             
-            <div class="card">
-                <div id="login-error" class="error hidden"></div>
-                
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter username">
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password" onkeypress="handleLoginKey(event)">
-                </div>
-                
-                <button onclick="login()">Login</button>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+            </div>
+            
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="container hidden">
+        <div class="main-header">
+            <h1>🔍 IRC Log Search</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        <div class="main-content">
+            <div class="form-grid">
+            <div class="form-group">
+                <label for="network">Network *</label>
+                <select id="network" onchange="loadChannels()">
+                    <option value="">Select a network...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="channel">Channel (optional - leave blank to search all)</label>
+                <select id="channel">
+                    <option value="">All channels</option>
+                </select>
+            </div>
+            
+            <div class="form-group full-width">
+                <label for="query">Search Query *</label>
+                <input type="text" id="query" placeholder="Enter search term...">
+            </div>
+            
+            <div class="form-group">
+                <label for="startDate">Start Date (optional)</label>
+                <input type="date" id="startDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="endDate">End Date (optional)</label>
+                <input type="date" id="endDate">
             </div>
         </div>
-
-        <!-- Search Section -->
-        <div id="search-section" class="hidden">
-            <header>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h1>🔍 ZNC Log Search</h1>
-                    <button class="secondary" onclick="logout()">Logout</button>
-                </div>
-            </header>
-            
-            <div class="card">
-                <h2 style="margin-bottom: 15px; color: #2c3e50;">Search IRC Logs</h2>
-                
-                <div class="search-grid">
-                    <div class="form-group">
-                        <label for="network">Network *</label>
-                        <select id="network" onchange="loadChannels()">
-                            <option value="">-- Select Network --</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="channel">Channel (optional - leave blank to search all)</label>
-                        <select id="channel">
-                            <option value="">-- All Channels --</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group full-width">
-                        <label for="query">Search Query *</label>
-                        <input type="text" id="query" placeholder="Enter text to search for...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="start-date">Start Date (optional)</label>
-                        <input type="date" id="start-date">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="end-date">End Date (optional)</label>
-                        <input type="date" id="end-date">
-                    </div>
-                </div>
-                
-                <div class="search-actions">
-                    <button onclick="search()">🔍 Search</button>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="case-sensitive">
-                        <label for="case-sensitive" style="margin-bottom: 0;">Case sensitive</label>
-                    </div>
-                </div>
+        
+        <div class="search-controls">
+            <button id="searchBtn" onclick="search()">Search</button>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="caseSensitive">
+                <label for="caseSensitive">Case sensitive</label>
             </div>
-
-            <div id="results" class="hidden">
-                <div class="card">
-                    <div id="loading" class="hidden">
-                        <div class="loader"></div>
-                        <p style="text-align: center; color: #6c757d;">Searching logs...</p>
-                    </div>
-                    
-                    <div id="result-stats" class="stats hidden"></div>
-                    <div id="result-list"></div>
-                </div>
-            </div>
+        </div>
+        
+        <div id="results" class="results-container"></div>
         </div>
     </div>
 
     <script>
-        // Handle Enter key in password field
-        function handleLoginKey(event) {
-            if (event.key === 'Enter') {
-                login();
-            }
-        }
-
-        async function login() {
+        let contextCache = {};
+        const EXPAND_LINES = 10;  // ← How many lines to load with incremental expansion
+        
+        // Check if already logged in
+        fetch('/api/networks')
+            .then(response => {
+                if (response.ok) {
+                    showMainApp();
+                }
+            });
+        
+        function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('login-error');
+            const errorDiv = document.getElementById('loginError');
             
-            if (!username || !password) {
-                errorDiv.textContent = 'Please enter both username and password';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({username, password})
-                });
-                
-                if (response.ok) {
-                    document.getElementById('login-section').classList.add('hidden');
-                    document.getElementById('search-section').classList.remove('hidden');
-                    loadNetworks();
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMainApp();
                 } else {
-                    errorDiv.textContent = 'Invalid username or password';
+                    errorDiv.textContent = data.error || 'Login failed';
                     errorDiv.classList.remove('hidden');
                 }
-            } catch (error) {
-                errorDiv.textContent = 'Connection error. Please try again.';
+            })
+            .catch(error => {
+                errorDiv.textContent = 'Network error';
                 errorDiv.classList.remove('hidden');
-            }
+            });
         }
-
-        async function logout() {
-            await fetch('/api/logout', {method: 'POST'});
-            document.getElementById('login-section').classList.remove('hidden');
-            document.getElementById('search-section').classList.add('hidden');
-            document.getElementById('results').classList.add('hidden');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-        }
-
-        async function loadNetworks() {
-            try {
-                const response = await fetch('/api/networks');
-                const data = await response.json();
-                
-                const select = document.getElementById('network');
-                select.innerHTML = '<option value="">-- Select Network --</option>';
-                
-                data.networks.forEach(network => {
-                    const option = document.createElement('option');
-                    option.value = network.id;
-                    option.textContent = network.name;
-                    select.appendChild(option);
+        
+        function logout() {
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => {
+                    document.getElementById('mainApp').classList.add('hidden');
+                    document.getElementById('loginForm').classList.remove('hidden');
+                    document.getElementById('username').value = '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('loginError').classList.add('hidden');
                 });
-            } catch (error) {
-                console.error('Error loading networks:', error);
-            }
         }
-
-        async function loadChannels() {
+        
+        function showMainApp() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            loadNetworks();
+        }
+        
+        function loadNetworks() {
+            fetch('/api/networks')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('network');
+                    select.innerHTML = '<option value="">Select a network...</option>';
+                    data.networks.forEach(network => {
+                        const option = document.createElement('option');
+                        option.value = network.id;
+                        option.textContent = network.name;
+                        select.appendChild(option);
+                    });
+                });
+        }
+        
+        function loadChannels() {
             const network = document.getElementById('network').value;
-            const select = document.getElementById('channel');
-            
-            select.innerHTML = '<option value="">-- All Channels --</option>';
+            const channelSelect = document.getElementById('channel');
+            channelSelect.innerHTML = '<option value="">All channels</option>';
             
             if (!network) return;
             
-            try {
-                const response = await fetch(`/api/channels/${network}`);
-                const data = await response.json();
-                
-                data.channels.forEach(channel => {
-                    const option = document.createElement('option');
-                    option.value = channel;
-                    option.textContent = channel;
-                    select.appendChild(option);
+            fetch(`/api/channels/${network}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.channels.forEach(channel => {
+                        const option = document.createElement('option');
+                        option.value = channel;
+                        option.textContent = channel;
+                        channelSelect.appendChild(option);
+                    });
                 });
-            } catch (error) {
-                console.error('Error loading channels:', error);
-            }
         }
-
-        async function search() {
+        
+        function search() {
             const query = document.getElementById('query').value;
             const network = document.getElementById('network').value;
             const channel = document.getElementById('channel').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-            const caseSensitive = document.getElementById('case-sensitive').checked;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const caseSensitive = document.getElementById('caseSensitive').checked;
             
-            if (!query.trim()) {
-                alert('Please enter a search query');
+            if (!query || !network) {
+                alert('Please enter a search query and select a network');
                 return;
             }
             
-            if (!network) {
-                alert('Please select a network');
-                return;
-            }
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="results-header">Searching...</div>';
             
-            // Show loading
-            document.getElementById('results').classList.remove('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('result-stats').classList.add('hidden');
-            document.getElementById('result-list').innerHTML = '';
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
             
-            try {
-                const response = await fetch('/api/search', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        query,
-                        network,
-                        channel,
-                        start_date: startDate,
-                        end_date: endDate,
-                        case_sensitive: caseSensitive
-                    })
-                });
-                
-                const data = await response.json();
-                
-                // Hide loading
-                document.getElementById('loading').classList.add('hidden');
-                
-                // Show stats
-                const statsDiv = document.getElementById('result-stats');
-                let statsText = `Found ${data.total} result${data.total !== 1 ? 's' : ''}`;
-                if (data.truncated) {
-                    statsText += ' (limited to 1000 results)';
-                }
-                statsDiv.textContent = statsText;
-                statsDiv.classList.remove('hidden');
-                
-                // Display results
-                const resultList = document.getElementById('result-list');
-                
-                if (data.results.length === 0) {
-                    resultList.innerHTML = '<p style="color: #6c757d; padding: 20px; text-align: center;">No results found</p>';
-                } else {
-                    data.results.forEach(result => {
-                        const div = document.createElement('div');
-                        div.className = 'result';
-                        div.innerHTML = `
-                            <div class="result-meta">
-                                <span><strong>${escapeHtml(result.network)}</strong></span>
-                                <span>${escapeHtml(result.channel)}</span>
-                                <span>${escapeHtml(result.file)}</span>
-                                <span>Line ${result.line}</span>
-                            </div>
-                            <div class="result-content">${escapeHtml(result.content)}</div>
-                        `;
-                        resultList.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('result-list').innerHTML = 
-                    '<p class="error">Error performing search. Please try again.</p>';
-                console.error('Search error:', error);
-            }
+            contextCache = {}; // Clear cache
+            
+            fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query,
+                    network,
+                    channel,
+                    start_date: startDate,
+                    end_date: endDate,
+                    case_sensitive: caseSensitive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchBtn.disabled = false;
+                displayResults(data);
+            })
+            .catch(error => {
+                searchBtn.disabled = false;
+                resultsDiv.innerHTML = `<div class="error">Search failed: ${error.message}</div>`;
+            });
         }
-
+        
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (data.results.length === 0) {
+                resultsDiv.innerHTML = '<div class="results-header">No results found</div>';
+                return;
+            }
+            
+            let html = `<div class="results-header">Found ${data.total} results${data.truncated ? ' (showing first 1000)' : ''}</div>`;
+            
+            data.results.forEach((result, index) => {
+                const resultId = `result-${index}`;
+                html += `
+                    <div class="result-item">
+                        <div class="result-header" onclick="toggleContext('${resultId}', ${JSON.stringify(result).replace(/"/g, '&quot;')})">
+                            <div class="result-meta">
+                                ${result.network} ${result.channel} ${result.file} Line ${result.line}
+                            </div>
+                            <div>▼</div>
+                        </div>
+                        <div class="result-content">${escapeHtml(result.content)}</div>
+                        <div id="${resultId}" class="context-container"></div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function toggleContext(resultId, result) {
+            const container = document.getElementById(resultId);
+            
+            if (container.classList.contains('visible')) {
+                container.classList.remove('visible');
+                return;
+            }
+            
+            container.classList.add('visible');
+            
+            // Check cache first
+            const cacheKey = `${result.network_id}:${result.channel}:${result.file}:${result.line}`;
+            if (contextCache[cacheKey]) {
+                displayContext(resultId, contextCache[cacheKey], result);
+                return;
+            }
+            
+            // Load context
+            container.innerHTML = '<div class="context-loading">Loading context...</div>';
+            
+            fetch('/api/context', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    network: result.network_id,
+                    channel: result.channel,
+                    file: result.file,
+                    line: result.line,
+                    lines_before: 2,
+                    lines_after: 2
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                contextCache[cacheKey] = data;
+                displayContext(resultId, data, result);
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="error">Failed to load context: ${error.message}</div>`;
+            });
+        }
+        
+        function displayContext(resultId, data, result) {
+            const container = document.getElementById(resultId);
+            
+            let html = '';
+            
+            // Expand up button
+            if (data.can_expand_up) {
+                const linesAbove = data.start_line - 1;
+                html += `<div class="expand-buttons">
+                    <button class="expand-btn" onclick="expandContext('${resultId}', ${JSON.stringify(result).replace(/"/g, '&quot;')}, 'up')">
+                        ↑ Load ${Math.min(EXPAND_LINES, linesAbove)} more lines above (${linesAbove} remaining)
+                    </button>
+                </div>`;
+            }
+            
+            // Context lines
+            data.context.forEach(line => {
+                const className = line.is_match ? 'context-line matched' : 'context-line';
+                html += `
+                    <div class="${className}">
+                        <span class="line-number">${line.line}</span>
+                        <span class="line-content">${escapeHtml(line.content)}</span>
+                    </div>
+                `;
+            });
+            
+            // Expand down button
+            if (data.can_expand_down) {
+                const linesBelow = data.total_lines - data.end_line;
+                html += `<div class="expand-buttons">
+                    <button class="expand-btn" onclick="expandContext('${resultId}', ${JSON.stringify(result).replace(/"/g, '&quot;')}, 'down')">
+                        ↓ Load ${Math.min(EXPAND_LINES, linesBelow)} more lines below (${linesBelow} remaining)
+                    </button>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function expandContext(resultId, result, direction) {
+            const cacheKey = `${result.network_id}:${result.channel}:${result.file}:${result.line}`;
+            const currentData = contextCache[cacheKey];
+            
+            if (!currentData) return;
+            
+            // Calculate how many lines we're currently showing before and after the match
+            let lines_before = result.line - currentData.start_line;  // FIXED: was backwards
+            let lines_after = currentData.end_line - result.line;
+            
+            if (direction === 'up') {
+                lines_before += EXPAND_LINES;
+            } else {
+                lines_after += EXPAND_LINES;
+            }
+            
+            const container = document.getElementById(resultId);
+            container.innerHTML = '<div class="context-loading">Loading more context...</div>';
+            
+            fetch('/api/context', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    network: result.network_id,
+                    channel: result.channel,
+                    file: result.file,
+                    line: result.line,
+                    lines_before: lines_before,
+                    lines_after: lines_after
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                contextCache[cacheKey] = data;
+                displayContext(resultId, data, result);
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="error">Failed to expand context: ${error.message}</div>`;
+            });
+        }
+        
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
+        
+        // Enter key handling
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('password')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') login();
+            });
+            
+            document.getElementById('query')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') search();
+            });
+        });
     </script>
 </body>
 </html>
