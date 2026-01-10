@@ -7,10 +7,10 @@ from functools import wraps
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'CHANGE_THIS_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+app.secret_key = 'CHANGE_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 CORS(app)
 
-# Configuration - THIS WILL BE AUTO UPDATED WHEN USING THE INSTALL.SH FILE
+# Configuration
 ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/<USERNAME>/networks'
 
 # Network display name mapping (OPTIONAL - leave empty for automatic detection)
@@ -24,7 +24,7 @@ NETWORK_NAMES = {}
 # User authentication
 # Generate hash with: python3 -c "import hashlib; print(hashlib.sha256('YourPassword'.encode()).hexdigest())"
 USERS = {
-    'admin': 'CHANGE_THIS_TO_YOUR_KEY'
+    'admin': 'CHANGE_TO_YOUR_KEY'
 }
 
 def login_required(f):
@@ -96,6 +96,56 @@ def get_channels(network):
                 channels.append(item)
     
     return jsonify({'channels': sorted(channels)})
+
+@app.route('/api/context', methods=['POST'])
+@login_required
+def get_context():
+    """Get surrounding lines for a specific log entry"""
+    data = request.json
+    network = data.get('network')
+    channel = data.get('channel')
+    log_file = data.get('file')
+    center_line = data.get('line')
+    lines_before = data.get('lines_before', 2)
+    lines_after = data.get('lines_after', 2)
+    
+    if not all([network, channel, log_file, center_line]):
+        return jsonify({'error': 'Missing required parameters'}), 400
+    
+    # Build path to log file
+    file_path = os.path.join(ZNC_BASE_PATH, network, 'moddata/log', channel, log_file)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'Log file not found'}), 404
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+        
+        # Calculate range
+        start_line = max(1, center_line - lines_before)
+        end_line = min(len(lines), center_line + lines_after)
+        
+        # Extract context
+        context = []
+        for i in range(start_line - 1, end_line):
+            context.append({
+                'line': i + 1,
+                'content': lines[i].rstrip(),
+                'is_match': (i + 1) == center_line
+            })
+        
+        return jsonify({
+            'context': context,
+            'start_line': start_line,
+            'end_line': end_line,
+            'total_lines': len(lines),
+            'can_expand_up': start_line > 1,
+            'can_expand_down': end_line < len(lines)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error reading file: {str(e)}'}), 500
 
 @app.route('/api/search', methods=['POST'])
 @login_required
@@ -197,6 +247,7 @@ def search_logs():
                             
                             results.append({
                                 'network': network_display,
+                                'network_id': network,  # Add internal ID for API calls
                                 'channel': channel_name,
                                 'file': log_file,
                                 'line': line_num,
@@ -224,4 +275,3 @@ def search_logs():
 if __name__ == '__main__':
     # For production, use a proper WSGI server like gunicorn
     app.run(host='0.0.0.0', port=5000, debug=False)
-
