@@ -5,21 +5,22 @@ A web-based search interface for ZNC IRC logs with authentication, multi-network
 ## Features
 
 - 🔐 Secure login authentication
-- 🌐 Multi-network
-- 📁 Search specific channels or all channels
+- 🌐 Multi-network support with auto-detection
+- 🔍 Search specific channels or all channels
 - 📅 Date range filtering
 - 🔤 Case-sensitive/insensitive search
 - 🎨 Modern, responsive web interface
 - ⚡ Production-ready with Gunicorn
+- 🤖 Automated installation script
 
 ## System Requirements
 
 - Python 3.8 or higher
 - ZNC with logging module enabled
 - Ubuntu/Debian Linux (or similar)
-- Root/sudo access for systemd service
+- Root/sudo access for systemd service (optional)
 
-## Installation Steps
+## Quick Start (Automated Installation)
 
 ### 1. Install System Dependencies
 
@@ -27,63 +28,30 @@ A web-based search interface for ZNC IRC logs with authentication, multi-network
 # Update package list
 sudo apt update
 
-# Install Python 3 and pip
+# Install Python 3 and required packages
 sudo apt install python3 python3-pip python3-venv -y
 ```
 
-### 2. Create Python Virtual Environment
+### 2. Prepare Installation Files
+
+Create the application directory and copy all files:
 
 ```bash
-# Create venv directory if it doesn't exist
-mkdir -p /home/<USERNAME>/venvs
+# Create directory structure
+mkdir -p ~/apps/znc_search/templates
+mkdir -p ~/apps/znc_search/service
 
-# Create virtual environment
-python3 -m venv /home/<USERNAME>/venvs/HexChat-Search
+# Copy files to appropriate locations
+# - app.py → ~/apps/znc_search/
+# - index.html → ~/apps/znc_search/templates/
+# - requirements.txt → ~/apps/znc_search/
+# - install.sh → ~/apps/znc_search/
+# - znc-search.service → ~/apps/znc_search/service/
 ```
 
-### 3. Install Python Packages
+### 3. Configure ZNC Logging
 
-```bash
-# Activate virtual environment
-source /home/<USERNAME>/venvs/HexChat-Search/bin/activate
-
-# Install required packages
-pip install --upgrade pip
-pip install Flask==3.0.0
-pip install Flask-CORS==4.0.0
-pip install gunicorn==21.2.0
-```
-
-### 4. Create Application Directory
-
-```bash
-# Create application directory
-mkdir -p /home/<USERNAME>/apps/znc_log_search
-mkdir -p /home/<USERNAME>/apps/znc_log_search/templates
-
-# Navigate to directory
-cd /home/<USERNAME>/apps/znc_log_search
-```
-
-### 5. Copy Application Files
-
-Place these files in `/home/<USERNAME>/apps/znc_log_search/`:
-- `app.py` - Main Flask application
-- `templates/index.html` - Web interface
-- `znc-search.service` - Systemd service file
-
-Directory structure:
-```
-/home/<USERNAME>/apps/znc_log_search/
-├── app.py
-├── templates/
-│   └── index.html
-└── znc-search.service
-```
-
-### 6. Configure ZNC Logging
-
-Enable the log module for each network:
+Enable the log module for each network you want to search:
 
 **Method 1: Via IRC**
 ```
@@ -92,66 +60,117 @@ Enable the log module for each network:
 
 **Method 2: Via ZNC Web Admin**
 1. Login to ZNC web interface
-2. Go to each network (TL, OB, CTW, Libera, omg)
+2. Go to each network
 3. Enable the "log" module
 4. Save settings
 
 Verify logs exist:
 ```bash
-ls -la /home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/
+ls -la ~/.znc/users/$(whoami)/networks/*/moddata/log/
 ```
 
-### 7. Configure Application
-
-Edit `app.py` and set your password:
+### 4. Run Automated Installation
 
 ```bash
-# Generate password hash
-python3 -c "import hashlib; print(hashlib.sha256('YourPasswordHere'.encode()).hexdigest())"
-
-# Edit app.py
-nano /home/<USERNAME>/apps/znc_log_search/app.py
+cd ~/apps/znc_search
+chmod +x install.sh
+./install.sh
 ```
 
-Update line 25 with your password hash:
-```python
-USERS = {
-    'admin': 'your_generated_hash_here'
-}
-```
+The installation script will:
+- ✅ Auto-detect your username and home directory
+- ✅ Create a Python virtual environment
+- ✅ Install all required dependencies
+- ✅ Configure paths in app.py
+- ✅ Generate a secure secret key
+- ✅ Create a password hash for your admin account
+- ✅ Configure the systemd service file
+- ✅ Optionally install and start the service
 
-### 8. Test the Application
+**Important:** During installation, you'll be prompted to:
+1. Enter a password for the admin account (this is the password you'll use to login)
+2. Choose whether to enable the service on boot
+3. Choose whether to start the service immediately
 
-```bash
-# Activate venv
-source /home/<USERNAME>/venvs/HexChat-Search/bin/activate
-
-# Run with Gunicorn
-cd /home/<USERNAME>/apps/znc_log_search
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
+### 5. Access the Application
 
 Visit: `http://your-server-ip:5000`
 
-Press `CTRL+C` to stop when done testing.
+Login with:
+- **Username:** admin
+- **Password:** (the password you entered during installation)
 
-### 9. Install as Systemd Service
+## Manual Installation (Alternative)
+
+If you prefer manual installation or need to customize the setup:
+
+### 1. Create Virtual Environment
 
 ```bash
-# Copy service file
-sudo cp /home/<USERNAME>/apps/znc_log_search/znc-search.service /etc/systemd/system/
+mkdir -p ~/apps/znc_search
+cd ~/apps/znc_search
+python3 -m venv venv
+```
 
-# Reload systemd
+### 2. Install Dependencies
+
+```bash
+source venv/bin/activate
+pip install --upgrade pip
+pip install Flask==3.0.0 Flask-CORS==4.0.0 gunicorn==21.2.0
+```
+
+### 3. Copy Application Files
+
+```bash
+mkdir -p templates
+# Copy app.py, templates/index.html, requirements.txt to this directory
+```
+
+### 4. Configure app.py
+
+Generate a secret key:
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+Update line 11 in `app.py` with the generated key.
+
+Generate password hash:
+```bash
+python3 -c "import hashlib; print(hashlib.sha256('YourPasswordHere'.encode()).hexdigest())"
+```
+
+Update line 24 in `app.py` with the generated hash.
+
+Update line 14 in `app.py` with your ZNC path:
+```python
+ZNC_BASE_PATH = '/home/YOUR_USERNAME/.znc/users/YOUR_USERNAME/networks'
+```
+
+### 5. Test Manually
+
+```bash
+source venv/bin/activate
+python app.py
+# Or with gunicorn:
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
+### 6. Install as Service (Optional)
+
+Edit `znc-search.service` and update paths:
+- User line
+- WorkingDirectory
+- Environment PATH
+- ExecStart
+
+Then:
+```bash
+sudo cp znc-search.service /etc/systemd/system/
 sudo systemctl daemon-reload
-
-# Enable service (start on boot)
 sudo systemctl enable znc-search
-
-# Start service
 sudo systemctl start znc-search
-
-# Check status
-sudo systemctl status znc-search
 ```
 
 ## Service Management
@@ -171,7 +190,7 @@ sudo systemctl restart znc-search
 # Check service status
 sudo systemctl status znc-search
 
-# View logs
+# View live logs
 journalctl -u znc-search -f
 
 # View last 100 log lines
@@ -184,51 +203,65 @@ journalctl -u znc-search -n 100 --no-pager
 # Check detailed logs
 journalctl -u znc-search -n 50 --no-pager
 
-# Verify gunicorn path
-ls -la /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn
+# Verify paths in service file
+cat /etc/systemd/system/znc-search.service
 
-# Test manually
-sudo -u <USERNAME> /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn --version
+# Test gunicorn manually
+cd ~/apps/znc_search
+source venv/bin/activate
+gunicorn --version
 
 # Check permissions
-ls -la /home/<USERNAME>/apps/znc_log_search/
+ls -la ~/apps/znc_search/
 ```
 
 ## Configuration
 
-### Network Names
+### Network Names (Optional)
 
-Edit `app.py` lines 17-23 to customize network display names:
+By default, the application auto-detects all networks with logging enabled and uses the capitalized folder name as the display name.
+
+To customize network display names, edit `app.py` lines 17-23:
 
 ```python
 NETWORK_NAMES = {
-    'NETWORK1': 'SHORT NAME1',
-    'NETWORK2': 'SHORT NAME2',
-    'NETWORK3': 'SHORT NAME3',
-    'NETWORK4': 'SHORT NAME4',
-    'NETWORK5': 'SHORT NAME5',
+    'libera': 'Libera.Chat',
+    'oftc': 'OFTC',
+    'efnet': 'EFnet',
+    # Add more custom names as needed
 }
 ```
 
-### Change Password
+### Change Admin Password
 
 ```bash
 # Generate new hash
 python3 -c "import hashlib; print(hashlib.sha256('NewPassword'.encode()).hexdigest())"
 
-# Edit app.py and update line 25
-nano /home/<USERNAME>/apps/znc_log_search/app.py
+# Edit app.py and update line 24
+nano ~/apps/znc_search/app.py
 
 # Restart service
 sudo systemctl restart znc-search
 ```
 
+### Add Additional Users
+
+Edit `app.py` and add users to the USERS dictionary:
+
+```python
+USERS = {
+    'admin': 'admin_password_hash_here',
+    'user2': 'user2_password_hash_here',
+}
+```
+
 ### Change Port
 
-Edit `znc-search.service` and change the port in the `ExecStart` line:
+Edit `/etc/systemd/system/znc-search.service` and change the port in the `ExecStart` line:
 
 ```ini
-ExecStart=/home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn -w 4 -b 0.0.0.0:8080 app:app
+ExecStart=/home/YOUR_USERNAME/apps/znc_search/venv/bin/gunicorn -w 4 -b 0.0.0.0:8080 app:app
 ```
 
 Then reload:
@@ -243,20 +276,20 @@ sudo systemctl restart znc-search
 
 1. **Login**
    - Username: `admin`
-   - Password: (the one you configured)
+   - Password: (configured during installation)
 
 2. **Search Logs**
-   - Select Network (TL, OB, CTW, Libera, omg)
+   - Select Network (auto-detected from your ZNC configuration)
    - Select Channel (or leave as "All Channels")
    - Enter search query
    - Optional: Set date range
    - Optional: Enable case-sensitive search
    - Click "Search"
 
-3. **Results**
+3. **View Results**
    - Shows network, channel, file, and line number
    - Displays full log line content
-   - Maximum 1000 results per search
+   - Maximum 1000 results per search (prevents overwhelming responses)
 
 ### Example Searches
 
@@ -267,6 +300,8 @@ sudo systemctl restart znc-search
 | `username` | All mentions of username |
 | `joined #` | Channel join events |
 | `http` | URLs in logs |
+| `error` | Error messages |
+| `nick!user@host` | Specific user activity |
 
 ## Supported Log Formats
 
@@ -274,6 +309,7 @@ The application handles both ZNC log filename formats:
 
 - ✅ `2025-12-04.log` (date with dashes)
 - ✅ `channel_20251204.log` (channel prefix, no dashes)
+- ✅ `20251204.log` (date without dashes)
 
 ## Firewall Configuration
 
@@ -287,15 +323,19 @@ sudo ufw allow 5000/tcp
 sudo ufw status
 ```
 
+For remote access, ensure your server's firewall allows incoming connections on port 5000.
+
 ## Security Recommendations
 
-1. **Use Strong Password**: Generate a secure password hash
-2. **Restrict Access**: Use firewall rules to limit access
-3. **HTTPS**: Set up nginx reverse proxy with SSL/TLS
+1. **Use Strong Password**: Generate a secure password during installation
+2. **Restrict Access**: Use firewall rules to limit access to trusted IPs
+3. **HTTPS**: Set up nginx reverse proxy with SSL/TLS for production
 4. **Regular Updates**: Keep Python packages updated
-5. **Monitor Logs**: Check service logs regularly
+5. **Monitor Logs**: Check service logs regularly for suspicious activity
+6. **Change Default Port**: Consider using a non-standard port
+7. **VPN/SSH Tunnel**: Access through VPN or SSH tunnel for maximum security
 
-## Production Deployment with Nginx (Optional)
+## Production Deployment with Nginx (Recommended)
 
 ### Install Nginx
 
@@ -303,7 +343,7 @@ sudo ufw status
 sudo apt install nginx -y
 ```
 
-### Configure Nginx
+### Configure Nginx Reverse Proxy
 
 Create `/etc/nginx/sites-available/znc-search`:
 
@@ -312,17 +352,34 @@ server {
     listen 80;
     server_name your-domain.com;
 
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    # SSL configuration (after certbot setup)
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
     location / {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket support (if needed)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
     }
 }
 ```
 
-Enable:
+Enable site:
 ```bash
 sudo ln -s /etc/nginx/sites-available/znc-search /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -336,46 +393,72 @@ sudo apt install certbot python3-certbot-nginx -y
 sudo certbot --nginx -d your-domain.com
 ```
 
+Certbot will automatically update your nginx configuration for SSL.
+
 ## Troubleshooting
 
 ### Can't Login
-- Verify password hash is correct in `app.py`
-- Check if service is running: `sudo systemctl status znc-search`
-- View logs: `journalctl -u znc-search -f`
+- **Check Password**: Verify password hash is correct in `app.py` line 24
+- **Service Status**: `sudo systemctl status znc-search`
+- **View Logs**: `journalctl -u znc-search -f`
+- **Test Manually**: Run `python app.py` to see error messages
 
 ### No Networks Showing
-- Verify ZNC base path in `app.py` line 14
-- Check log module is loaded in ZNC: `/msg *status ListMods`
-- Verify log directories exist: `ls -la /home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/`
+- **Check ZNC Path**: Verify path in `app.py` line 14 matches your setup
+- **Verify Logging**: `/msg *status ListMods` - ensure "log" module is loaded
+- **Check Directories**: `ls -la ~/.znc/users/$(whoami)/networks/*/moddata/log/`
+- **Permissions**: Ensure the application user can read ZNC log directories
 
 ### No Search Results
-- Check if log files exist in the channel directory
-- Verify date format is supported (YYYY-MM-DD.log or channel_YYYYMMDD.log)
-- Try case-insensitive search
-- Check date range isn't excluding files
+- **Check Logs Exist**: Verify log files exist in channel directories
+- **Date Format**: Ensure log files match supported formats
+- **Try Case-Insensitive**: Disable case-sensitive search
+- **Check Date Range**: Verify date range isn't excluding files
+- **Test Simple Query**: Try searching for a common word
 
-### Service Won't Start (203/EXEC Error)
-- Verify gunicorn path: `ls -la /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn`
-- Check service file: `cat /etc/systemd/system/znc-search.service`
-- Test manually: `sudo -u <USERNAME> /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn --version`
-- Check permissions: `chmod +x /home/<USERNAME>/venvs/HexChat-Search/bin/gunicorn`
+### Service Won't Start (Exit Code 203/EXEC)
+- **Check Paths**: `cat /etc/systemd/system/znc-search.service`
+- **Verify Gunicorn**: `ls -la ~/apps/znc_search/venv/bin/gunicorn`
+- **Test Manually**: `sudo -u $(whoami) ~/apps/znc_search/venv/bin/gunicorn --version`
+- **Fix Permissions**: `chmod +x ~/apps/znc_search/venv/bin/gunicorn`
+- **Reinstall**: Run `./install.sh` again
 
 ### Permission Denied Errors
 ```bash
 # Fix ownership
-sudo chown -R <USERNAME>:<USERNAME> /home/<USERNAME>/apps/znc_log_search
-sudo chown -R <USERNAME>:<USERNAME> /home/<USERNAME>/venvs/HexChat-Search
+sudo chown -R $(whoami):$(whoami) ~/apps/znc_search
 
 # Fix permissions
-chmod 755 /home/<USERNAME>/apps/znc_log_search
-chmod 644 /home/<USERNAME>/apps/znc_log_search/app.py
+chmod 755 ~/apps/znc_search
+chmod 644 ~/apps/znc_search/app.py
+chmod 755 ~/apps/znc_search/venv/bin/*
+```
+
+### Port Already in Use
+```bash
+# Check what's using port 5000
+sudo lsof -i :5000
+
+# Or use a different port (see "Change Port" section)
+```
+
+### Python Virtual Environment Issues
+```bash
+# Recreate venv
+cd ~/apps/znc_search
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## File Locations
 
-- **Application**: `/home/<USERNAME>/apps/znc_log_search/`
-- **Virtual Environment**: `/home/<USERNAME>/venvs/HexChat-Search/`
-- **ZNC Logs**: `/home/<USERNAME>/.znc/users/<USERNAME>/networks/*/moddata/log/`
+After installation, files are located at:
+
+- **Application**: `~/apps/znc_search/`
+- **Virtual Environment**: `~/apps/znc_search/venv/`
+- **ZNC Logs**: `~/.znc/users/USERNAME/networks/*/moddata/log/`
 - **Service File**: `/etc/systemd/system/znc-search.service`
 - **Nginx Config**: `/etc/nginx/sites-available/znc-search` (if using nginx)
 
@@ -388,28 +471,60 @@ chmod 644 /home/<USERNAME>/apps/znc_log_search/app.py
 
 ## Updating the Application
 
+### Update Application Code
+
 ```bash
 # Stop service
 sudo systemctl stop znc-search
 
-# Update app.py or other files
-nano /home/<USERNAME>/apps/znc_log_search/app.py
+# Update files (app.py, index.html, etc.)
+cd ~/apps/znc_search
+# ... make your changes ...
 
 # Restart service
 sudo systemctl start znc-search
 ```
 
-## Backup
+### Update Python Dependencies
 
 ```bash
-# Backup application
-tar -czf znc-search-backup-$(date +%Y%m%d).tar.gz /home/<USERNAME>/apps/znc_log_search/
+cd ~/apps/znc_search
+source venv/bin/activate
+pip install --upgrade Flask Flask-CORS gunicorn
+sudo systemctl restart znc-search
+```
 
-# Backup ZNC logs (optional)
-tar -czf znc-logs-backup-$(date +%Y%m%d).tar.gz /home/<USERNAME>/.znc/users/<USERNAME>/networks/
+### Reinstall Completely
+
+```bash
+cd ~/apps/znc_search
+./install.sh
+# Follow prompts to reconfigure
+```
+
+## Backup
+
+### Backup Application
+
+```bash
+tar -czf znc-search-backup-$(date +%Y%m%d).tar.gz ~/apps/znc_search/
+```
+
+### Backup Configuration Only
+
+```bash
+cp ~/apps/znc_search/app.py ~/app.py.backup.$(date +%Y%m%d)
+```
+
+### Backup ZNC Logs (Optional)
+
+```bash
+tar -czf znc-logs-backup-$(date +%Y%m%d).tar.gz ~/.znc/users/$(whoami)/networks/
 ```
 
 ## Uninstall
+
+### Complete Removal
 
 ```bash
 # Stop and disable service
@@ -421,18 +536,85 @@ sudo rm /etc/systemd/system/znc-search.service
 sudo systemctl daemon-reload
 
 # Remove application
-rm -rf /home/<USERNAME>/apps/znc_log_search/
+rm -rf ~/apps/znc_search/
 
-# Remove virtual environment (optional)
-rm -rf /home/<USERNAME>/venvs/HexChat-Search/
+# Remove nginx config (if installed)
+sudo rm /etc/nginx/sites-enabled/znc-search
+sudo rm /etc/nginx/sites-available/znc-search
+sudo systemctl restart nginx
 ```
 
-## Support
+### Keep Logs Only
 
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review service logs: `journalctl -u znc-search -n 100`
-3. Verify all installation steps were completed
+If you want to remove the application but keep ZNC logs:
+
+```bash
+# Only remove the application directory
+rm -rf ~/apps/znc_search/
+```
+
+Your ZNC logs remain at `~/.znc/users/USERNAME/networks/*/moddata/log/`
+
+## Advanced Configuration
+
+### Custom Search Limits
+
+Edit `app.py` line 191 to change the result limit:
+
+```python
+if len(results) >= 1000:  # Change 1000 to desired limit
+```
+
+### Multiple Workers
+
+Adjust Gunicorn workers in `/etc/systemd/system/znc-search.service`:
+
+```ini
+ExecStart=/path/to/gunicorn -w 8 -b 0.0.0.0:5000 app:app
+```
+
+Rule of thumb: `(2 × num_cores) + 1` workers
+
+### Enable Debug Mode (Not for Production!)
+
+Edit `app.py` last line:
+
+```python
+app.run(host='0.0.0.0', port=5000, debug=True)  # Only for testing!
+```
+
+## Performance Tips
+
+1. **Regular Log Rotation**: Large log files slow down searches
+2. **Use Date Filters**: Narrow searches with date ranges
+3. **Specific Channels**: Search individual channels when possible
+4. **Index Frequently**: Consider indexing for very large log collections
+5. **SSD Storage**: Store logs on SSD for faster access
+
+## Support & Resources
+
+- **Check Logs**: First step for any issue - `journalctl -u znc-search -n 100`
+- **Test Manually**: Run `python app.py` to see detailed errors
+- **ZNC Documentation**: https://wiki.znc.in/
+- **Flask Documentation**: https://flask.palletsprojects.com/
+
+## Changelog
+
+### Version 1.1 (January 2026)
+- ✨ Added automated installation script
+- ✨ Auto-detection of username and paths
+- ✨ Automatic secret key and password generation
+- ✨ Auto-configuration of service file
+- ✨ Local venv in application directory
+- 🐛 Improved error handling
+- 📝 Updated documentation
+
+### Version 1.0
+- Initial release
+- Basic search functionality
+- Multi-network support
+- Date filtering
+- Authentication system
 
 ## License
 
@@ -440,5 +622,6 @@ This is a custom application for personal use.
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: January 2026
+**Version**: 1.1  
+**Last Updated**: January 2026  
+**Automated Installation**: Yes
