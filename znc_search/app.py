@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.secret_key = 'CHANGE_THIS_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 CORS(app)
 
-# Configuration - CHANGE THIS
+# Configuration - THIS WILL BE AUTO UPDATED WHEN USING THE INSTALL.SH FILE
 ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/<USERNAME>/networks'
 
 # Network display name mapping (OPTIONAL - leave empty for automatic detection)
@@ -224,3 +224,4 @@ def search_logs():
 if __name__ == '__main__':
     # For production, use a proper WSGI server like gunicorn
     app.run(host='0.0.0.0', port=5000, debug=False)
+
