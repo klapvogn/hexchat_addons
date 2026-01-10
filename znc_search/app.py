@@ -7,11 +7,11 @@ from functools import wraps
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = 'CHANGE_IT_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
+app.secret_key = 'CHANGE_THIS_TO_YOUR_KEY'  # Generate with: python3 -c "import secrets; print(secrets.token_hex(32))"
 CORS(app)
 
-# Configuration
-ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/klapvogn/networks'
+# Configuration - CHANGE THIS
+ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/<USERNAME>/networks'
 
 # Network display name mapping (OPTIONAL - leave empty for automatic detection)
 # Add entries here ONLY if you want custom short names
@@ -24,7 +24,7 @@ NETWORK_NAMES = {}
 # User authentication
 # Generate hash with: python3 -c "import hashlib; print(hashlib.sha256('YourPassword'.encode()).hexdigest())"
 USERS = {
-    'admin': 'CHANGE_IT_TO_YOUR_KEY'
+    'admin': 'CHANGE_THIS_TO_YOUR_KEY'
 }
 
 def login_required(f):
