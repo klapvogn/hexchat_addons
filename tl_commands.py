@@ -1,14 +1,20 @@
 import hexchat
 
 __module_name__ = "TL Commands"
-__module_version__ = "2.9"
+__module_version__ = "2.8"
 __module_description__ = "FLS commonly used commands"
 __author__ = 'Piratpalle'
 
 
-# Check if user is present in channel
 def is_user_in_channel(username):
-    """Check if a user is present in the current channel"""
+    """Check if a user is present in the current channel or if we're in a PM"""
+    channel = hexchat.get_info('channel')
+    
+    # If we're in a PM (channel name doesn't start with #), skip check
+    if not channel.startswith('#'):
+        return True
+    
+    # In a channel, check if the user is present
     users = hexchat.get_list('users')
     for user in users:
         if user.nick.lower() == username.lower():
@@ -153,13 +159,13 @@ def newuser_cmd(word, word_eol, userdata):
         
     response = (
         f"\x0314{username}, You have been enabled. Here are a few links to help you get started. "
-        "\002Wiki\002: http://wiki.torrentleech.org/doku.php | "
-        "\002New User Guide\002: https://wiki.torrentleech.org/doku.php/newly_invited_users | "
-        "\002How long do I need to seed\002: http://wiki.torrentleech.org/doku.php/user_classes | "
-        "\002How to maintain a good ratio\002: https://forums.torrentleech.org/t/how-to-maintain-your-ratio/78082 | "
-        "\002HnR\002: https://wiki.torrentleech.org/doku.php/hnr | "
-        "\002Our Forum\002: https://forums.torrentleech.org/ | "
-        "\002Freeleech - (bookmark this)\002: https://www.torrentleech.org/torrents/browse/index/facets/tags%3AFREELEECH_added%3A%255BNOW%252FMINUTE-10MINUTES%2520TO%2520NOW%252FMINUTE%252B1MINUTE%255D - "
+        "\x02Wiki\x02: http://wiki.torrentleech.org/doku.php | "
+        "\x02New User Guide\x02: https://wiki.torrentleech.org/doku.php/newly_invited_users | "
+        "\x02How long do I need to seed\x02: http://wiki.torrentleech.org/doku.php/user_classes | "
+        "\x02How to maintain a good ratio\x02: https://forums.torrentleech.org/t/how-to-maintain-your-ratio/78082 | "
+        "\x02HnR\x02: https://wiki.torrentleech.org/doku.php/hnr | "
+        "\x02Our Forum\002: https://forums.torrentleech.org/ | "
+        "\x02Freeleech - (bookmark this - Use it to built ratio)\x02: https://www.torrentleech.org/torrents/browse/index/facets/tags%3AFREELEECH_added%3A%255BNOW%252FMINUTE-10MINUTES%2520TO%2520NOW%252FMINUTE%252B1MINUTE%255D - "
         "Please ensure you give them all a good read!\x03"
     )
     
