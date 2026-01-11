@@ -11,7 +11,7 @@ app.secret_key = 'IS_HANDLED_BY_INSTALL.SH'
 CORS(app)
 
 # Configuration
-DB_PATH = 'znc_logs.db'
+DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
 DB_KEY = 'IS_HANDLED_BY_INSTALL.SH'  # Change this to a strong encryption key
 
 # Network display name mapping (OPTIONAL)
@@ -322,6 +322,14 @@ def get_stats():
     cursor.execute('SELECT MIN(log_date), MAX(log_date) FROM log_entries')
     date_range = cursor.fetchone()
     
+    # Get network count
+    cursor.execute('SELECT COUNT(DISTINCT network_id) FROM log_entries')
+    network_count = cursor.fetchone()[0]
+    
+    # Get channel count
+    cursor.execute('SELECT COUNT(DISTINCT channel_name) FROM log_entries')
+    channel_count = cursor.fetchone()[0]
+    
     # Get network counts
     cursor.execute('''
         SELECT n.display_name, COUNT(*) 
@@ -336,6 +344,8 @@ def get_stats():
     
     return jsonify({
         'total_entries': total_entries,
+        'network_count': network_count,
+        'channel_count': channel_count,
         'date_range': {
             'start': date_range[0],
             'end': date_range[1]
