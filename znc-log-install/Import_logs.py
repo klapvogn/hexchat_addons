@@ -19,8 +19,8 @@ from pysqlcipher3 import dbapi2 as sqlite
 import argparse
 
 # Configuration - should match app.py
-ZNC_BASE_PATH = '/home/klapvogn/.znc/users/klapvogn/networks'
-DB_PATH = 'znc_logs.db'
+ZNC_BASE_PATH = '/home/<USERNAME>/.znc/users/<USERNAME>/networks'
+DB_PATH = '/home/<USERNAME>/apps/znc_search/znc_logs.db'
 DB_KEY = 'IS_HANDLED_BY_INSTALL.SH'  # Must match app.py
 
 # Network display name mapping (should match app.py)
@@ -179,7 +179,7 @@ def import_network(conn, network_id, incremental=False, last_import_date=None):
             VALUES (?, ?)
         ''', (network_id, channel_name))
         
-        # Process log files in this channel
+       # Process log files in this channel
         log_files = sorted([f for f in os.listdir(channel_path) if f.endswith('.log')])
         
         for log_file in log_files:
@@ -189,12 +189,13 @@ def import_network(conn, network_id, incremental=False, last_import_date=None):
                 print(f"    ⚠ Skipping file with unparseable date: {log_file}")
                 continue
             
-            # Skip if incremental and file is older than last import
-            if incremental and last_import_date and log_date < last_import_date:
+            # ✅ CORRECT - Everything below is inside the for loop
+            # Skip if incremental and file is older than last import (compare dates only)
+            if incremental and last_import_date and log_date.date() < last_import_date.date():
                 continue
-            
+
             file_path = os.path.join(channel_path, log_file)
-            
+
             # Check if this file has already been imported
             cursor.execute('''
                 SELECT COUNT(*) FROM log_entries 
@@ -202,21 +203,33 @@ def import_network(conn, network_id, incremental=False, last_import_date=None):
                 AND channel_name = ? 
                 AND log_date = ?
             ''', (network_id, channel_name, log_date.strftime('%Y-%m-%d')))
-            
+
             existing_count = cursor.fetchone()[0]
-            
+
+            # In incremental mode: skip old dates that are already imported,
+            # but re-import today's file to catch new messages
             if existing_count > 0 and incremental:
-                continue
-            
-            # Delete existing entries for this file (for full re-import)
-            if not incremental:
+                # Re-import today's entries only
+                if log_date.date() == datetime.now().date():
+                    cursor.execute('''
+                        DELETE FROM log_entries 
+                        WHERE network_id = ? 
+                        AND channel_name = ? 
+                        AND log_date = ?
+                    ''', (network_id, channel_name, log_date.strftime('%Y-%m-%d')))
+                else:
+                    # Old date already imported, skip it
+                    continue
+
+            # Delete existing entries for this file (for full re-import in non-incremental mode)
+            if not incremental and existing_count > 0:
                 cursor.execute('''
                     DELETE FROM log_entries 
                     WHERE network_id = ? 
                     AND channel_name = ? 
                     AND log_date = ?
                 ''', (network_id, channel_name, log_date.strftime('%Y-%m-%d')))
-            
+                
             # Import the file
             try:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
