@@ -7,19 +7,19 @@ from functools import wraps
 from pysqlcipher3 import dbapi2 as sqlite
 
 app = Flask(__name__)
-app.secret_key = 'THE_iNSTALL.SH_FILE_HANDLES_THIS'
+app.secret_key = 'c1a7bb35f9dfbfe3ac7f594e7d6157ead3bd9552bae74e638b3a370483b6c6eb'
 CORS(app)
 
 # Configuration
 DB_PATH = 'znc_logs.db'
-DB_KEY = 'THE_iNSTALL.SH_FILE_HANDLES_THIS'  # Change this to a strong encryption key
+DB_KEY = 'your-strong-encryption-key-here'  # Change this to a strong encryption key
 
 # Network display name mapping (OPTIONAL)
 NETWORK_NAMES = {}
 
 # User authentication
 USERS = {
-    'admin': 'THE_iNSTALL.SH_FILE_HANDLES_THIS'
+    'admin': '5684bb7a8cc9d82568f8359ae83da0c4a04a2af0da21978a55efc99e05b620ce'
 }
 
 def get_db():
@@ -133,9 +133,10 @@ def get_networks():
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT DISTINCT id, display_name 
-        FROM networks 
-        ORDER BY display_name
+        SELECT DISTINCT n.id, n.display_name 
+        FROM networks n
+        INNER JOIN log_entries le ON n.id = le.network_id
+        ORDER BY n.display_name
     ''')
     
     networks = []
