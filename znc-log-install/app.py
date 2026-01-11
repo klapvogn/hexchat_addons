@@ -11,7 +11,7 @@ app.secret_key = 'IS_HANDLED_BY_INSTALL.SH'
 CORS(app)
 
 # Configuration
-DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
+DB_PATH = '/home/<USERNAME>/apps/znc_search/znc_logs.db'
 DB_KEY = 'IS_HANDLED_BY_INSTALL.SH'  # Change this to a strong encryption key
 
 # Network display name mapping (OPTIONAL)
@@ -362,3 +362,4 @@ if __name__ == '__main__':
     
     # For production, use a proper WSGI server like gunicorn
     app.run(host='0.0.0.0', port=5000, debug=False)
+
