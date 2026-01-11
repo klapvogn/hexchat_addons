@@ -61,7 +61,7 @@ If you prefer manual installation:
 
 1. **Install Python dependencies:**
    ```bash
-   pip3 install flask flask-cors pysqlcipher3
+   pip3 install flask flask-cors pysqlcipher3 gunicor
    ```
 
 2. **Configure the application:**
