@@ -21,7 +21,7 @@ import argparse
 # Configuration - should match app.py
 ZNC_BASE_PATH = '/home/klapvogn/.znc/users/klapvogn/networks'
 DB_PATH = 'znc_logs.db'
-DB_KEY = 'your-strong-encryption-key-here'  # Must match app.py
+DB_KEY = 'IS_HANDLED_BY_INSTALL.SH'  # Must match app.py
 
 # Network display name mapping (should match app.py)
 NETWORK_NAMES = {}
