@@ -26,7 +26,7 @@ import shutil
 
 # Configuration - should match app.py
 DB_PATH = 'znc_logs.db'
-DB_KEY = 'THE_iNSTALL.SH_FILE_HANDLES_THIS'  # Must match app.py
+DB_KEY = 'IS_HANDLED_BY_INSTALL.SH'  # Must match app.py
 BACKUP_DIR = 'backup'  # Directory for backups (relative to script location)
 
 def get_db():
