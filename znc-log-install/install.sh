@@ -118,6 +118,139 @@ echo "========================================================================"
 echo "SECURITY CONFIGURATION"
 echo "========================================================================"
 echo ""
+# Check if DB_KEY already exists in any config file
+echo "Checking for existing encryption keys..."
+CONFIG_FILES=("$APP_PATH/app.py" "$APP_PATH/import_logs.py" "$APP_PATH/db_utils.py")
+EXISTING_KEYS=()
+DIFFERENT_KEYS=false
+
+for config_file in "${CONFIG_FILES[@]}"; do
+    if [ -f "$config_file" ]; then
+        if grep -q "DB_KEY = '[^']*'" "$config_file"; then
+            key=$(grep "DB_KEY = '[^']*'" "$config_file" | sed "s/.*DB_KEY = '\([^']*\)'.*/\1/")
+            if [ -n "$key" ] && [ "$key" != "your-encryption-key-here" ]; then
+                filename=$(basename "$config_file")
+                EXISTING_KEYS+=("$filename:$key")
+                
+                # Check if this key differs from others
+                if [ ${#EXISTING_KEYS[@]} -gt 1 ]; then
+                    first_key=$(echo "${EXISTING_KEYS[0]}" | cut -d: -f2)
+                    if [ "$key" != "$first_key" ]; then
+                        DIFFERENT_KEYS=true
+                        echo -e "${RED}⚠ Warning: $filename has a different key than other files!${NC}"
+                    fi
+                fi
+            fi
+        fi
+    fi
+done
+
+# Process the results
+if [ ${#EXISTING_KEYS[@]} -gt 0 ]; then
+    echo -e "${YELLOW}Found existing DB_KEY in configuration files${NC}"
+    echo ""
+    
+    # Show which files have keys
+    for entry in "${EXISTING_KEYS[@]}"; do
+        filename=$(echo "$entry" | cut -d: -f1)
+        key=$(echo "$entry" | cut -d: -f2)
+        echo "  $filename: ${key:0:16}..."
+    done
+    
+    if [ "$DIFFERENT_KEYS" = true ]; then
+        echo -e "${RED}⚠ WARNING: Configuration files have different encryption keys!${NC}"
+        echo -e "${RED}  This will cause database access errors.${NC}"
+        echo ""
+        echo "Options:"
+        echo "  1) Use the key from app.py"
+        echo "  2) Use the key from import_logs.py" 
+        echo "  3) Use the key from db_utils.py"
+        echo "  4) Generate a new key (recommended for consistency)"
+        echo ""
+        read -p "Choose option (1-4): " -n 1 -r
+        echo
+        
+        case $REPLY in
+            1)
+                ENCRYPTION_KEY=$(echo "${EXISTING_KEYS[0]}" | cut -d: -f2)
+                ;;
+            2)
+                for entry in "${EXISTING_KEYS[@]}"; do
+                    if [[ "$entry" == *"import_logs.py"* ]]; then
+                        ENCRYPTION_KEY=$(echo "$entry" | cut -d: -f2)
+                        break
+                    fi
+                done
+                ;;
+            3)
+                for entry in "${EXISTING_KEYS[@]}"; do
+                    if [[ "$entry" == *"db_utils.py"* ]]; then
+                        ENCRYPTION_KEY=$(echo "$entry" | cut -d: -f2)
+                        break
+                    fi
+                done
+                ;;
+            4)
+                # Will generate new key below
+                SKIP_KEY_GEN=false
+                ;;
+            *)
+                echo -e "${RED}Invalid choice. Generating new key.${NC}"
+                SKIP_KEY_GEN=false
+                ;;
+        esac
+        
+        if [[ $REPLY =~ ^[1-3]$ ]]; then
+            echo -e "${GREEN}Using selected key from configuration files${NC}"
+            SKIP_KEY_GEN=true
+        fi
+    else
+        # All files have the same key
+        ENCRYPTION_KEY=$(echo "${EXISTING_KEYS[0]}" | cut -d: -f2)
+        echo ""
+        echo -e "${YELLOW}Current key (first 16 chars): ${ENCRYPTION_KEY:0:16}...${NC}"
+        read -p "Keep existing encryption key? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo -e "${GREEN}Using existing encryption key${NC}"
+            SKIP_KEY_GEN=true
+        else
+            echo -e "${YELLOW}Will generate new key${NC}"
+            SKIP_KEY_GEN=false
+        fi
+    fi
+else
+    echo -e "${GREEN}No existing encryption keys found${NC}"
+    SKIP_KEY_GEN=false
+fi
+
+echo ""
+
+# Generate encryption key (if not using existing)
+echo -e "${YELLOW}Step 1: Database Encryption Key${NC}"
+if [ "$SKIP_KEY_GEN" = true ]; then
+    echo -e "${GREEN}✓ Using existing key${NC}"
+else
+    ENCRYPTION_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+    echo -e "${GREEN}✓ New encryption key generated${NC}"
+    
+    # Warn about database re-import if replacing existing key
+    if [ ${#EXISTING_KEYS[@]} -gt 0 ]; then
+        echo ""
+        echo -e "${RED}⚠ WARNING: You've changed the encryption key!${NC}"
+        echo -e "${RED}  Any existing encrypted database will be unreadable.${NC}"
+        echo -e "${RED}  You'll need to re-import your logs.${NC}"
+        echo ""
+        read -p "Continue with new key? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Installation aborted."
+            exit 1
+        fi
+    fi
+fi
+echo ""
+
 echo -e "${YELLOW}Step 1: Generating Database Encryption Key${NC}"
 ENCRYPTION_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 echo -e "${GREEN}✓ Encryption key generated${NC}"
