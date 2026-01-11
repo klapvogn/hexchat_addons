@@ -61,7 +61,7 @@ If you prefer manual installation:
 
 1. **Install Python dependencies:**
    ```bash
-   pip3 install flask flask-cors pysqlcipher3 gunicor
+   pip3 install flask flask-cors gunicorn pysqlcipher3
    ```
 
 2. **Configure the application:**
@@ -77,8 +77,15 @@ If you prefer manual installation:
    ```
 
 4. **Start the web application:**
+   
+   For testing/development:
    ```bash
    python3 app.py
+   ```
+   
+   For production, use the systemd service (which runs Gunicorn):
+   ```bash
+   sudo systemctl start znc-search
    ```
 
 ## Configuration
@@ -149,10 +156,21 @@ python3 import_logs.py --network libera
 
 ### Web Interface
 
+**For Testing/Development:**
+
 1. Start the application:
    ```bash
    python3 app.py
    ```
+
+**For Production:**
+
+1. Use the systemd service (runs Gunicorn automatically):
+   ```bash
+   sudo systemctl start znc-search
+   ```
+
+**Accessing the Interface:**
 
 2. Open your browser to: `http://localhost:5000`
 
@@ -284,16 +302,19 @@ Description=ZNC Log Search Web Interface
 After=network.target
 
 [Service]
-Type=simple
+Type=notify
 User=username
 WorkingDirectory=/home/username/apps/znc_search
-ExecStart=/usr/bin/python3 /home/username/apps/znc_search/app.py
+Environment="PATH=/home/username/apps/znc_search/venv/bin"
+ExecStart=/home/username/apps/znc_search/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:app
 Restart=always
 RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
 ```
+
+**Note**: The service uses Gunicorn with 4 worker processes. Adjust the `-w` parameter based on your server's resources (recommended: 2-4 workers per CPU core).
 
 ## Cron Jobs
 
@@ -441,14 +462,34 @@ sudo journalctl -u znc-search -n 50
 
 Verify paths in service file match your installation.
 
+Common issues:
+- Gunicorn not installed: `source venv/bin/activate && pip install gunicorn`
+- Wrong venv path in service file
+- Missing app.py file
+- Database permission issues
+
 ### Port Already in Use
 
 **Problem**: "Address already in use: Port 5000"
 
-**Solution**: Change port in `app.py`:
+**Solution**: 
+- Check if another instance is running: `sudo systemctl status znc-search`
+- Change port in systemd service file (edit the `-b 0.0.0.0:5000` parameter)
+- Or change in `app.py` if running directly:
 ```python
 app.run(host='0.0.0.0', port=5001, debug=False)
 ```
+
+### Gunicorn Worker Timeout
+
+**Problem**: Workers timing out or restarting frequently
+
+**Solution**: Adjust worker count and timeout in service file:
+```ini
+ExecStart=/path/to/venv/bin/gunicorn -w 2 -b 0.0.0.0:5000 --timeout 120 app:app
+```
+
+Reduce workers (`-w 2`) if you have limited resources, or increase timeout (`--timeout 120`) for slow queries.
 
 ## Uninstallation
 
@@ -468,11 +509,12 @@ This will:
 
 1. **Change Default Password**: Always change the default admin password
 2. **Strong Encryption Key**: Use a minimum 32-character random encryption key
-3. **Network Access**: By default, the app listens on `0.0.0.0` (all interfaces)
-   - For local-only access, change to `127.0.0.1` in `app.py`
-4. **HTTPS**: For production, use a reverse proxy (nginx/Apache) with SSL
-5. **Backups**: Store backups securely; they contain sensitive IRC logs
-6. **File Permissions**: Restrict access to the database and application files
+3. **Production Server**: The systemd service uses Gunicorn (WSGI server) for production - do not use Flask's development server (`app.run()`) in production
+4. **Network Access**: By default, the app listens on `0.0.0.0` (all interfaces)
+   - For local-only access, change to `127.0.0.1` in the systemd service file
+5. **HTTPS**: For production, use a reverse proxy (nginx/Apache) with SSL
+6. **Backups**: Store backups securely; they contain sensitive IRC logs
+7. **File Permissions**: Restrict access to the database and application files
 
 ## Performance Tips
 
@@ -487,6 +529,7 @@ This will:
 ### Python Packages
 - `flask` - Web framework
 - `flask-cors` - Cross-origin resource sharing
+- `gunicorn` - WSGI HTTP server (for production deployment)
 - `pysqlcipher3` - Encrypted SQLite database
 
 ### System Requirements
