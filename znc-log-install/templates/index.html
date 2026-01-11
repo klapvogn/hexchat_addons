@@ -46,6 +46,53 @@
             padding: 30px;
         }
         
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 6px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            min-height: 38px;  /* Ensure consistent height */
+            display: flex;
+            align-items: center;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value.date-range {
+            font-size: 16px;
+            line-height: 1.3;
+        }     
+        
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -358,6 +405,29 @@
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
         <div class="main-content">
+            <!-- Stats Section -->
+            <div class="stats-section">
+                <h2 style="margin: 0 0 10px 0; font-size: 18px;">Database Statistics</h2>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Total Lines</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Networks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Channels</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">-</div>
+                        <div class="stat-label">Date Range</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-grid">
             <div class="form-group">
                 <label for="network">Network *</label>
@@ -403,7 +473,7 @@
 
     <script>
         let contextCache = {};
-        const EXPAND_LINES = 10;  // ← How many lines to load with incremental expansion
+        const EXPAND_LINES = 10;
         
         // Check if already logged in
         fetch('/api/networks')
@@ -453,6 +523,50 @@
             document.getElementById('loginForm').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             loadNetworks();
+            loadStats();
+        }
+        
+        function loadStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const statsGrid = document.getElementById('statsGrid');
+                    
+                    // Format numbers with commas
+                    const formatNumber = (num) => num.toLocaleString();
+                    
+                    // Format dates to be shorter
+                    const formatDate = (dateStr) => {
+                        const date = new Date(dateStr);
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                    };
+
+                    const dateRange = data.date_range.start && data.date_range.end 
+                        ? `${formatDate(data.date_range.start)} - ${formatDate(data.date_range.end)}`
+                        : 'N/A';
+
+                    statsGrid.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value">${formatNumber(data.total_entries)}</div>
+                            <div class="stat-label">Total Lines</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.network_count}</div>
+                            <div class="stat-label">Networks</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.channel_count}</div>
+                            <div class="stat-label">Channels</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value date-range">${dateRange}</div>
+                            <div class="stat-label">Date Range</div>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Failed to load stats:', error);
+                });
         }
         
         function loadNetworks() {
@@ -508,7 +622,7 @@
             const searchBtn = document.getElementById('searchBtn');
             searchBtn.disabled = true;
             
-            contextCache = {}; // Clear cache
+            contextCache = {};
             
             fetch('/api/search', {
                 method: 'POST',
@@ -549,7 +663,7 @@
                     <div class="result-item">
                         <div class="result-header" onclick="toggleContext('${resultId}', ${JSON.stringify(result).replace(/"/g, '&quot;')})">
                             <div class="result-meta">
-                                ${result.network} ${result.channel} ${result.file} Line ${result.line}
+                                ${result.network} ${result.channel} ${result.date} Line ${result.line}
                             </div>
                             <div>▼</div>
                         </div>
@@ -573,7 +687,7 @@
             container.classList.add('visible');
             
             // Check cache first
-            const cacheKey = `${result.network_id}:${result.channel}:${result.file}:${result.line}`;
+            const cacheKey = `${result.network_id}:${result.channel}:${result.date}:${result.line}`;
             if (contextCache[cacheKey]) {
                 displayContext(resultId, contextCache[cacheKey], result);
                 return;
@@ -588,7 +702,7 @@
                 body: JSON.stringify({
                     network: result.network_id,
                     channel: result.channel,
-                    file: result.file,
+                    date: result.date,
                     line: result.line,
                     lines_before: 2,
                     lines_after: 2
@@ -644,13 +758,13 @@
         }
         
         function expandContext(resultId, result, direction) {
-            const cacheKey = `${result.network_id}:${result.channel}:${result.file}:${result.line}`;
+            const cacheKey = `${result.network_id}:${result.channel}:${result.date}:${result.line}`;
             const currentData = contextCache[cacheKey];
             
             if (!currentData) return;
             
             // Calculate how many lines we're currently showing before and after the match
-            let lines_before = result.line - currentData.start_line;  // FIXED: was backwards
+            let lines_before = result.line - currentData.start_line;
             let lines_after = currentData.end_line - result.line;
             
             if (direction === 'up') {
@@ -668,7 +782,7 @@
                 body: JSON.stringify({
                     network: result.network_id,
                     channel: result.channel,
-                    file: result.file,
+                    date: result.date,
                     line: result.line,
                     lines_before: lines_before,
                     lines_after: lines_after
