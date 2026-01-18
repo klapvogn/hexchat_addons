@@ -11,12 +11,12 @@ import io
 import base64
 
 app = Flask(__name__)
-app.secret_key = '7c5887855a2210e21ce73409d0ebb965e974487dedbb2f6c808dcbc76ab42b1e'
+app.secret_key = 'xxxx'
 CORS(app)
 
 # Configuration
 DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
-DB_KEY = '28ab2972b162ccc779d905cb6b422cd707d0470aef68c4289b41fa8ea42fb7df'
+DB_KEY = 'xxxx'
 
 # Network display name mapping (OPTIONAL)
 NETWORK_NAMES = {}
@@ -628,4 +628,5 @@ if __name__ == '__main__':
         init_db()
     
     # For production, use a proper WSGI server like gunicorn
+
     app.run(host='0.0.0.0', port=5000, debug=False)
