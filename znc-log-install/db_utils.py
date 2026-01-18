@@ -25,8 +25,8 @@ from pysqlcipher3 import dbapi2 as sqlite
 import shutil
 
 # Configuration - should match app.py
-DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
-DB_KEY = '28ab2972b162ccc779d905cb6b422cd707d0470aef68c4289b41fa8ea42fb7df'  # Must match app.py
+DB_PATH = '/home/xxxx/apps/znc_search/znc_logs.db'
+DB_KEY = 'xxxx'  # Must match app.py
 BACKUP_DIR = 'backup'  # Directory for backups (relative to script location)
 
 def get_db():
@@ -286,4 +286,5 @@ def main():
         cleanup_backups(args.keep_days)
 
 if __name__ == '__main__':
+
     main()
