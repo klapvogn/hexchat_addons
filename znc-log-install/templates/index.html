@@ -42,56 +42,14 @@
             font-weight: 600;
         }
         
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
         .main-content {
             padding: 30px;
         }
-        
-        /* Stats Section */
-        .stats-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px;
-            border-radius: 6px;
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            min-height: 38px;  /* Ensure consistent height */
-            display: flex;
-            align-items: center;
-        }
-        
-        .stat-label {
-            font-size: 13px;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value.date-range {
-            font-size: 16px;
-            line-height: 1.3;
-        }     
         
         .form-grid {
             display: grid;
@@ -117,6 +75,7 @@
         }
         
         input[type="text"],
+        input[type="password"],
         input[type="date"],
         select {
             padding: 10px;
@@ -127,6 +86,7 @@
         }
         
         input[type="text"]:focus,
+        input[type="password"]:focus,
         input[type="date"]:focus,
         select:focus {
             outline: none;
@@ -348,16 +308,30 @@
             width: 100%;
         }
         
-        .login-error {
-            background: #fee;
-            color: #c33;
+        .login-error, .login-info {
             padding: 10px;
             border-radius: 4px;
             margin-bottom: 15px;
         }
         
+        .login-error {
+            background: #fee;
+            color: #c33;
+        }
+        
+        .login-info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
         .error {
             color: #d32f2f;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .success {
+            color: #2e7d32;
             margin-top: 10px;
             font-size: 14px;
         }
@@ -375,6 +349,223 @@
         .logout-btn:hover {
             background-color: #c0392b;
         }
+        
+        .settings-btn {
+            background-color: #3498db;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .settings-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+        
+        .close-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .settings-section h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        
+        .qr-code-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .qr-code-container img {
+            max-width: 300px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+        
+        .manual-entry {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            text-align: center;
+            word-break: break-all;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status-enabled {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .status-disabled {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .button-secondary {
+            background-color: #95a5a6;
+        }
+        
+        .button-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .button-danger {
+            background-color: #e74c3c;
+        }
+        
+        .button-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+    
+        
+        /* Statistics Dashboard */
+        .stats-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .stats-dashboard h2 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        
+        .stat-value.date-range {
+            font-size: 18px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -384,96 +575,213 @@
         </div>
         <div class="login-card">
             <div id="loginError" class="login-error hidden"></div>
+            <div id="loginInfo" class="login-info hidden"></div>
             
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+            <div id="credentialsStep">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+                </div>
+                
+                <button onclick="login()">Login</button>
             </div>
             
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+            <div id="twoFactorStep" class="hidden">
+                <div class="form-group">
+                    <label for="totp_code">Enter 6-digit code from your authenticator app</label>
+                    <input type="text" id="totp_code" placeholder="000000" maxlength="6" pattern="\d{6}" autocomplete="one-time-code">
+                </div>
+                
+                <div class="button-group">
+                    <button onclick="verify2FA()">Verify</button>
+                    <button class="button-secondary" onclick="backToCredentials()">Back</button>
+                </div>
             </div>
-            
-            <button onclick="login()">Login</button>
         </div>
     </div>
 
     <div id="mainApp" class="container hidden">
         <div class="main-header">
             <h1>🔍 IRC Log Search</h1>
-            <button class="logout-btn" onclick="logout()">Logout</button>
+            <div class="header-buttons">
+                <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
         </div>
         <div class="main-content">
-            <!-- Stats Section -->
-            <div class="stats-section">
-                <h2 style="margin: 0 0 10px 0; font-size: 18px;">Database Statistics</h2>
-                <div class="stats-grid" id="statsGrid">
+            <!-- Statistics Dashboard -->
+            <div id="statsDashboard" class="stats-dashboard">
+                <h2>Database Statistics</h2>
+                <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-value">-</div>
+                        <div class="stat-value" id="statTotalLines">-</div>
                         <div class="stat-label">Total Lines</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">-</div>
+                        <div class="stat-value" id="statNetworks">-</div>
                         <div class="stat-label">Networks</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">-</div>
+                        <div class="stat-value" id="statChannels">-</div>
                         <div class="stat-label">Channels</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value">-</div>
+                        <div class="stat-value date-range" id="statDateRange">-</div>
                         <div class="stat-label">Date Range</div>
                     </div>
                 </div>
             </div>
 
             <div class="form-grid">
-            <div class="form-group">
-                <label for="network">Network *</label>
-                <select id="network" onchange="loadChannels()">
-                    <option value="">Select a network...</option>
-                </select>
+                <div class="form-group">
+                    <label for="network">Network *</label>
+                    <select id="network" onchange="loadChannels()">
+                        <option value="">Select a network...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="channel">Channel (optional - leave blank to search all)</label>
+                    <select id="channel">
+                        <option value="">All channels</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="query">Search Query *</label>
+                    <input type="text" id="query" placeholder="Enter search term...">
+                </div>
+                
+                <div class="form-group">
+                    <label for="startDate">Start Date (optional)</label>
+                    <input type="date" id="startDate">
+                </div>
+                
+                <div class="form-group">
+                    <label for="endDate">End Date (optional)</label>
+                    <input type="date" id="endDate">
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="channel">Channel (optional - leave blank to search all)</label>
-                <select id="channel">
-                    <option value="">All channels</option>
-                </select>
+            <div class="search-controls">
+                <button id="searchBtn" onclick="search()">Search</button>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="caseSensitive">
+                    <label for="caseSensitive">Case sensitive</label>
+                </div>
             </div>
             
-            <div class="form-group full-width">
-                <label for="query">Search Query *</label>
-                <input type="text" id="query" placeholder="Enter search term...">
-            </div>
-            
-            <div class="form-group">
-                <label for="startDate">Start Date (optional)</label>
-                <input type="date" id="startDate">
-            </div>
-            
-            <div class="form-group">
-                <label for="endDate">End Date (optional)</label>
-                <input type="date" id="endDate">
-            </div>
+            <div id="results" class="results-container"></div>
         </div>
-        
-        <div class="search-controls">
-            <button id="searchBtn" onclick="search()">Search</button>
-            <div class="checkbox-wrapper">
-                <input type="checkbox" id="caseSensitive">
-                <label for="caseSensitive">Case sensitive</label>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn" onclick="closeSettings()">&times;</button>
             </div>
-        </div>
-        
-        <div id="results" class="results-container"></div>
+            <div class="modal-body">
+                <!-- Change Password Section -->
+                <div class="settings-section">
+                    <h3>Change Password</h3>
+                    <div id="passwordChangeMessage" class="hidden"></div>
+                    
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" autocomplete="current-password">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newPassword">New Password (min 8 characters)</label>
+                        <input type="password" id="newPassword" autocomplete="new-password">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" autocomplete="new-password">
+                    </div>
+                    
+                    <button onclick="changePassword()">Change Password</button>
+                </div>
+                
+                <!-- 2FA Section -->
+                <div class="settings-section">
+                    <h3>
+                        Two-Factor Authentication (2FA)
+                        <span id="2faStatusBadge" class="status-badge"></span>
+                    </h3>
+                    
+                    <div id="2faDisabledView" class="hidden">
+                        <p class="info-text">
+                            Two-factor authentication adds an extra layer of security to your account. 
+                            You'll need to enter a code from your authenticator app when logging in.
+                        </p>
+                        <button onclick="setup2FA()">Enable 2FA</button>
+                    </div>
+                    
+                    <div id="2faSetupView" class="hidden">
+                        <div id="2faSetupMessage" class="hidden"></div>
+                        
+                        <p class="info-text">
+                            Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):
+                        </p>
+                        
+                        <div class="qr-code-container">
+                            <img id="qrCodeImage" src="" alt="2FA QR Code">
+                        </div>
+                        
+                        <p class="info-text">
+                            Or manually enter this code:
+                        </p>
+                        <div class="manual-entry" id="manualEntryCode"></div>
+                        
+                        <div class="form-group">
+                            <label for="verificationCode">Enter the 6-digit code from your app to complete setup</label>
+                            <input type="text" id="verificationCode" placeholder="000000" maxlength="6" pattern="\d{6}">
+                        </div>
+                        
+                        <div class="button-group">
+                            <button onclick="enable2FA()">Verify and Enable</button>
+                            <button class="button-secondary" onclick="cancel2FASetup()">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <div id="2faEnabledView" class="hidden">
+                        <p class="info-text">
+                            Two-factor authentication is currently enabled. You'll be prompted for a 6-digit code when logging in.
+                        </p>
+                        
+                        <div id="2faDisableMessage" class="hidden"></div>
+                        
+                        <div id="2faDisableForm" class="hidden">
+                            <div class="form-group">
+                                <label for="disablePassword">Enter your password to disable 2FA</label>
+                                <input type="password" id="disablePassword" autocomplete="current-password">
+                            </div>
+                            <div class="button-group">
+                                <button class="button-danger" onclick="confirmDisable2FA()">Confirm Disable</button>
+                                <button class="button-secondary" onclick="cancelDisable2FA()">Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <button id="disable2FABtn" class="button-danger" onclick="showDisable2FA()">Disable 2FA</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         let contextCache = {};
         const EXPAND_LINES = 10;
+        let requires2FA = false;
         
         // Check if already logged in
         fetch('/api/networks')
@@ -487,6 +795,10 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('loginError');
+            const infoDiv = document.getElementById('loginInfo');
+            
+            errorDiv.classList.add('hidden');
+            infoDiv.classList.add('hidden');
             
             fetch('/api/login', {
                 method: 'POST',
@@ -497,6 +809,13 @@
             .then(data => {
                 if (data.success) {
                     showMainApp();
+                } else if (data.requires_2fa) {
+                    requires2FA = true;
+                    document.getElementById('credentialsStep').classList.add('hidden');
+                    document.getElementById('twoFactorStep').classList.remove('hidden');
+                    infoDiv.textContent = data.message;
+                    infoDiv.classList.remove('hidden');
+                    document.getElementById('totp_code').focus();
                 } else {
                     errorDiv.textContent = data.error || 'Login failed';
                     errorDiv.classList.remove('hidden');
@@ -508,6 +827,48 @@
             });
         }
         
+        function verify2FA() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const totp_code = document.getElementById('totp_code').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!/^\d{6}$/.test(totp_code)) {
+                errorDiv.textContent = 'Please enter a valid 6-digit code';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            errorDiv.classList.add('hidden');
+            
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, totp_code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMainApp();
+                } else {
+                    errorDiv.textContent = data.error || 'Verification failed';
+                    errorDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                errorDiv.textContent = 'Network error';
+                errorDiv.classList.remove('hidden');
+            });
+        }
+        
+        function backToCredentials() {
+            document.getElementById('twoFactorStep').classList.add('hidden');
+            document.getElementById('credentialsStep').classList.remove('hidden');
+            document.getElementById('loginInfo').classList.add('hidden');
+            document.getElementById('totp_code').value = '';
+            requires2FA = false;
+        }
+        
         function logout() {
             fetch('/api/logout', { method: 'POST' })
                 .then(() => {
@@ -515,7 +876,10 @@
                     document.getElementById('loginForm').classList.remove('hidden');
                     document.getElementById('username').value = '';
                     document.getElementById('password').value = '';
+                    document.getElementById('totp_code').value = '';
                     document.getElementById('loginError').classList.add('hidden');
+                    document.getElementById('loginInfo').classList.add('hidden');
+                    backToCredentials();
                 });
         }
         
@@ -526,47 +890,233 @@
             loadStats();
         }
         
-        function loadStats() {
-            fetch('/api/stats')
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('visible');
+            load2FAStatus();
+        }
+        
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('visible');
+            
+            // Clear all forms
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordChangeMessage').classList.add('hidden');
+            
+            document.getElementById('verificationCode').value = '';
+            document.getElementById('disablePassword').value = '';
+        }
+        
+        function changePassword() {
+            const current = document.getElementById('currentPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('passwordChangeMessage');
+            
+            messageDiv.classList.add('hidden');
+            
+            if (!current || !newPass || !confirm) {
+                messageDiv.textContent = 'All fields are required';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPass !== confirm) {
+                messageDiv.textContent = 'New passwords do not match';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (newPass.length < 8) {
+                messageDiv.textContent = 'Password must be at least 8 characters';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            fetch('/api/user/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    current_password: current,
+                    new_password: newPass
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'success';
+                    messageDiv.classList.remove('hidden');
+                    
+                    // Clear form
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    messageDiv.textContent = data.error;
+                    messageDiv.className = 'error';
+                    messageDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                messageDiv.textContent = 'Network error';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+            });
+        }
+        
+        function load2FAStatus() {
+            fetch('/api/user/2fa/status')
                 .then(response => response.json())
                 .then(data => {
-                    const statsGrid = document.getElementById('statsGrid');
+                    const badge = document.getElementById('2faStatusBadge');
+                    const disabledView = document.getElementById('2faDisabledView');
+                    const setupView = document.getElementById('2faSetupView');
+                    const enabledView = document.getElementById('2faEnabledView');
                     
-                    // Format numbers with commas
-                    const formatNumber = (num) => num.toLocaleString();
+                    // Hide all views
+                    disabledView.classList.add('hidden');
+                    setupView.classList.add('hidden');
+                    enabledView.classList.add('hidden');
                     
-                    // Format dates to be shorter
-                    const formatDate = (dateStr) => {
-                        const date = new Date(dateStr);
-                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
-                    };
-
-                    const dateRange = data.date_range.start && data.date_range.end 
-                        ? `${formatDate(data.date_range.start)} - ${formatDate(data.date_range.end)}`
-                        : 'N/A';
-
-                    statsGrid.innerHTML = `
-                        <div class="stat-card">
-                            <div class="stat-value">${formatNumber(data.total_entries)}</div>
-                            <div class="stat-label">Total Lines</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${data.network_count}</div>
-                            <div class="stat-label">Networks</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${data.channel_count}</div>
-                            <div class="stat-label">Channels</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value date-range">${dateRange}</div>
-                            <div class="stat-label">Date Range</div>
-                        </div>
-                    `;
-                })
-                .catch(error => {
-                    console.error('Failed to load stats:', error);
+                    if (data.enabled) {
+                        badge.textContent = 'Enabled';
+                        badge.className = 'status-badge status-enabled';
+                        enabledView.classList.remove('hidden');
+                    } else {
+                        badge.textContent = 'Disabled';
+                        badge.className = 'status-badge status-disabled';
+                        disabledView.classList.remove('hidden');
+                    }
                 });
+        }
+        
+        function setup2FA() {
+            const messageDiv = document.getElementById('2faSetupMessage');
+            messageDiv.classList.add('hidden');
+            
+            fetch('/api/user/2fa/setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('qrCodeImage').src = data.qr_code;
+                document.getElementById('manualEntryCode').textContent = data.manual_entry;
+                
+                document.getElementById('2faDisabledView').classList.add('hidden');
+                document.getElementById('2faSetupView').classList.remove('hidden');
+            })
+            .catch(error => {
+                messageDiv.textContent = 'Failed to setup 2FA';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+            });
+        }
+        
+        function enable2FA() {
+            const code = document.getElementById('verificationCode').value;
+            const messageDiv = document.getElementById('2faSetupMessage');
+            
+            messageDiv.classList.add('hidden');
+            
+            if (!/^\d{6}$/.test(code)) {
+                messageDiv.textContent = 'Please enter a valid 6-digit code';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            fetch('/api/user/2fa/enable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'success';
+                    messageDiv.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        load2FAStatus();
+                        document.getElementById('verificationCode').value = '';
+                    }, 1500);
+                } else {
+                    messageDiv.textContent = data.error;
+                    messageDiv.className = 'error';
+                    messageDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                messageDiv.textContent = 'Network error';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+            });
+        }
+        
+        function cancel2FASetup() {
+            document.getElementById('verificationCode').value = '';
+            load2FAStatus();
+        }
+        
+        function showDisable2FA() {
+            document.getElementById('disable2FABtn').classList.add('hidden');
+            document.getElementById('2faDisableForm').classList.remove('hidden');
+        }
+        
+        function cancelDisable2FA() {
+            document.getElementById('2faDisableForm').classList.add('hidden');
+            document.getElementById('disable2FABtn').classList.remove('hidden');
+            document.getElementById('disablePassword').value = '';
+            document.getElementById('2faDisableMessage').classList.add('hidden');
+        }
+        
+        function confirmDisable2FA() {
+            const password = document.getElementById('disablePassword').value;
+            const messageDiv = document.getElementById('2faDisableMessage');
+            
+            messageDiv.classList.add('hidden');
+            
+            if (!password) {
+                messageDiv.textContent = 'Password is required';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            fetch('/api/user/2fa/disable', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.textContent = data.message;
+                    messageDiv.className = 'success';
+                    messageDiv.classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        load2FAStatus();
+                        cancelDisable2FA();
+                    }, 1500);
+                } else {
+                    messageDiv.textContent = data.error;
+                    messageDiv.className = 'error';
+                    messageDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                messageDiv.textContent = 'Network error';
+                messageDiv.className = 'error';
+                messageDiv.classList.remove('hidden');
+            });
         }
         
         function loadNetworks() {
@@ -583,6 +1133,27 @@
                     });
                 });
         }
+        function loadStats() {
+            fetch('/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Update stat values
+                    document.getElementById('statTotalLines').textContent = data.total_entries.toLocaleString();
+                    document.getElementById('statNetworks').textContent = data.network_count;
+                    document.getElementById('statChannels').textContent = data.channel_count;
+                    
+                    // Format date range
+                    if (data.date_range && data.date_range.start && data.date_range.end) {
+                        const startDate = new Date(data.date_range.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                        const endDate = new Date(data.date_range.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+                        document.getElementById('statDateRange').textContent = `${startDate} - ${endDate}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading stats:', error);
+                });
+        }
+        
         
         function loadChannels() {
             const network = document.getElementById('network').value;
@@ -686,14 +1257,12 @@
             
             container.classList.add('visible');
             
-            // Check cache first
             const cacheKey = `${result.network_id}:${result.channel}:${result.date}:${result.line}`;
             if (contextCache[cacheKey]) {
                 displayContext(resultId, contextCache[cacheKey], result);
                 return;
             }
             
-            // Load context
             container.innerHTML = '<div class="context-loading">Loading context...</div>';
             
             fetch('/api/context', {
@@ -723,7 +1292,6 @@
             
             let html = '';
             
-            // Expand up button
             if (data.can_expand_up) {
                 const linesAbove = data.start_line - 1;
                 html += `<div class="expand-buttons">
@@ -733,7 +1301,6 @@
                 </div>`;
             }
             
-            // Context lines
             data.context.forEach(line => {
                 const className = line.is_match ? 'context-line matched' : 'context-line';
                 html += `
@@ -744,7 +1311,6 @@
                 `;
             });
             
-            // Expand down button
             if (data.can_expand_down) {
                 const linesBelow = data.total_lines - data.end_line;
                 html += `<div class="expand-buttons">
@@ -763,7 +1329,6 @@
             
             if (!currentData) return;
             
-            // Calculate how many lines we're currently showing before and after the match
             let lines_before = result.line - currentData.start_line;
             let lines_after = currentData.end_line - result.line;
             
@@ -808,6 +1373,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('password')?.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') login();
+            });
+            
+            document.getElementById('totp_code')?.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') verify2FA();
             });
             
             document.getElementById('query')?.addEventListener('keypress', (e) => {
