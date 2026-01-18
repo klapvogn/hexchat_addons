@@ -15,7 +15,7 @@ app.secret_key = 'xxxx'
 CORS(app)
 
 # Configuration
-DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
+DB_PATH = '/home/xxxx/apps/znc_search/znc_logs.db'
 DB_KEY = 'xxxx'
 
 # Network display name mapping (OPTIONAL)
@@ -630,3 +630,4 @@ if __name__ == '__main__':
     # For production, use a proper WSGI server like gunicorn
 
     app.run(host='0.0.0.0', port=5000, debug=False)
+
