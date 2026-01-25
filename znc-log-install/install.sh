@@ -458,7 +458,7 @@ Type=notify
 User=$CURRENT_USER
 WorkingDirectory=$APP_PATH
 Environment="PATH=$VENV_PATH/bin"
-ExecStart=$VENV_PATH/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:app
+ExecStart=$VENV_PATH/bin/gunicorn -w 4 -b 0.0.0.0:5000 znc_search:app
 Restart=always
 RestartSec=10
 
