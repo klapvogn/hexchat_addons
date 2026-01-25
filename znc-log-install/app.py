@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 from flask_cors import CORS
 import os
 import hashlib
@@ -10,14 +10,14 @@ import qrcode
 import io
 import base64
 
-app = Flask(__name__, static_folder='static')
+app = Flask(__name__)
 # Serve favicon directly
-app.secret_key = '7c5887855a2210e21ce73409d0ebb965e974487dedbb2f6c808dcbc76ab42b1e'
+app.secret_key = 'secret_key'
 CORS(app)
 
 # Configuration
-DB_PATH = '/home/klapvogn/apps/znc_search/znc_logs.db'
-DB_KEY = '28ab2972b162ccc779d905cb6b422cd707d0470aef68c4289b41fa8ea42fb7df'
+DB_PATH = '/path/to/znc_search/znc_logs.db'
+DB_KEY = 'secret_key'
 
 # Network display name mapping (OPTIONAL)
 NETWORK_NAMES = {}
@@ -131,7 +131,18 @@ def login_required(f):
 
 @app.route('/')
 def index():
+    # Redirect to login if not authenticated
+    if 'logged_in' not in session:
+        return redirect(url_for('login_page'))
     return render_template('index.html')
+
+@app.route('/login')
+def login_page():
+    """Serve the login page"""
+    # If already logged in, redirect to main page
+    if 'logged_in' in session:
+        return redirect(url_for('index'))
+    return render_template('login.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -184,7 +195,7 @@ def login():
     session['username'] = username
     session['user_id'] = user_id
     
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'redirect': '/'})
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -273,23 +284,23 @@ def setup_2fa():
     ''', (secret, session['user_id']))
     
     conn.commit()
+    
+    # Get username for QR code
+    cursor.execute('SELECT username FROM users WHERE id = ?', (session['user_id'],))
+    username = cursor.fetchone()[0]
     conn.close()
     
     # Generate QR code
-    username = session['username']
     totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
         name=username,
         issuer_name='IRC Log Search'
     )
     
-    # Create QR code image
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(totp_uri)
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Convert to base64
     buffer = io.BytesIO()
     img.save(buffer, format='PNG')
     img_str = base64.b64encode(buffer.getvalue()).decode()
@@ -303,7 +314,7 @@ def setup_2fa():
 @app.route('/api/user/2fa/enable', methods=['POST'])
 @login_required
 def enable_2fa():
-    """Enable 2FA after verifying a code"""
+    """Enable 2FA after verifying code"""
     data = request.json
     totp_code = data.get('code')
     
@@ -313,7 +324,7 @@ def enable_2fa():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Get user's secret
+    # Get current secret
     cursor.execute('''
         SELECT totp_secret FROM users WHERE id = ?
     ''', (session['user_id'],))
@@ -321,12 +332,12 @@ def enable_2fa():
     result = cursor.fetchone()
     if not result or not result[0]:
         conn.close()
-        return jsonify({'error': 'No 2FA secret found. Please set up 2FA first.'}), 400
+        return jsonify({'error': 'Please setup 2FA first'}), 400
     
-    secret = result[0]
+    totp_secret = result[0]
     
-    # Verify code
-    totp = pyotp.TOTP(secret)
+    # Verify the code
+    totp = pyotp.TOTP(totp_secret)
     if not totp.verify(totp_code, valid_window=1):
         conn.close()
         return jsonify({'error': 'Invalid verification code'}), 401
@@ -341,10 +352,7 @@ def enable_2fa():
     conn.commit()
     conn.close()
     
-    return jsonify({
-        'success': True,
-        'message': '2FA enabled successfully'
-    })
+    return jsonify({'success': True, 'message': '2FA enabled successfully'})
 
 @app.route('/api/user/2fa/disable', methods=['POST'])
 @login_required
@@ -354,7 +362,7 @@ def disable_2fa():
     password = data.get('password')
     
     if not password:
-        return jsonify({'error': 'Password required to disable 2FA'}), 400
+        return jsonify({'error': 'Password required'}), 400
     
     conn = get_db()
     cursor = conn.cursor()

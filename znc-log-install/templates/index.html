@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search IRC Logs</title>
-    <link rel="icon" type="image/x-icon" href="/static/favicon/logs-favicon/favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/logs-favicon/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/logs-favicon/favicon-32x32.png">
-    <style>
+    <title>Search IRC Logs</title>  
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/favicon/android-chrome-512x512.png"> 
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/favicon/android-chrome-192x192.png"> 
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicon/site.webmanifest">   
+   <style>
         * {
             margin: 0;
             padding: 0;
@@ -15,34 +18,60 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
             padding: 20px;
         }
         
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: #2d2d2d;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
         
         .main-header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px 30px;
-            border-radius: 8px 8px 0 0;
+            text-align: center;
+            padding: 30px;
+            border-bottom: 1px solid #404040;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .lock-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
         }
         
         .main-header h1 {
             margin: 0;
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
         }
         
         .header-buttons {
@@ -70,30 +99,41 @@
             grid-column: 1 / -1;
         }
         
-        label {
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #555;
+        .form-label, label {
+            display: block;
             font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 8px;
         }
         
         input[type="text"],
         input[type="password"],
         input[type="date"],
-        select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.2s;
+        select,
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            background: #1a1a1a;
+            border: 2px solid #404040;
+            border-radius: 8px;
+            color: #fff;
+            transition: all 0.3s ease;
         }
         
         input[type="text"]:focus,
         input[type="password"]:focus,
         input[type="date"]:focus,
-        select:focus {
+        select:focus,
+        .form-input:focus {
             outline: none;
-            border-color: #4CAF50;
+            border-color: #4a9eff;
+            background: #222;
+        }
+
+        input::placeholder {
+            color: #666;
         }
         
         .search-controls {
@@ -103,25 +143,32 @@
             margin-top: 20px;
         }
         
-        button {
-            padding: 10px 24px;
-            background-color: #4CAF50;
+        button, .btn {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background-color 0.2s;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
         
-        button:hover {
-            background-color: #45a049;
+        button:hover, .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 158, 255, 0.4);
+        }
+
+        button:active, .btn:active {
+            transform: translateY(0);
         }
         
-        button:disabled {
-            background-color: #ccc;
+        button:disabled, .btn:disabled {
+            background: #404040;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .checkbox-wrapper {
@@ -146,29 +193,31 @@
         }
         
         .results-header {
-            background-color: #e8f5e9;
+            background-color: #1a1a1a;
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 20px;
             font-weight: 500;
-            color: #2e7d32;
+            color: #4a9eff;
+            border: 1px solid #404040;
         }
         
         .result-item {
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid #404040;
+            border-radius: 8px;
             margin-bottom: 15px;
             overflow: hidden;
             transition: box-shadow 0.2s;
+            background: #1a1a1a;
         }
         
         .result-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
         }
         
         .result-header {
             padding: 12px 15px;
-            background-color: #fafafa;
+            background-color: #2d2d2d;
             cursor: pointer;
             user-select: none;
             display: flex;
@@ -177,12 +226,12 @@
         }
         
         .result-header:hover {
-            background-color: #f0f0f0;
+            background-color: #333;
         }
         
         .result-meta {
             font-size: 13px;
-            color: #666;
+            color: #888;
             font-weight: 500;
         }
         
@@ -190,14 +239,15 @@
             padding: 12px 15px;
             font-family: 'Courier New', monospace;
             font-size: 13px;
-            background-color: #fff;
-            border-top: 1px solid #eee;
+            background-color: #1a1a1a;
+            border-top: 1px solid #404040;
+            color: #e0e0e0;
         }
         
         .context-container {
             display: none;
-            background-color: #f9f9f9;
-            border-top: 1px solid #eee;
+            background-color: #222;
+            border-top: 1px solid #404040;
             padding: 15px;
         }
         
@@ -208,7 +258,7 @@
         .context-loading {
             text-align: center;
             padding: 20px;
-            color: #666;
+            color: #888;
         }
         
         .context-line {
@@ -222,7 +272,7 @@
         }
         
         .line-number {
-            color: #999;
+            color: #666;
             min-width: 50px;
             text-align: right;
             user-select: none;
@@ -232,10 +282,11 @@
         .line-content {
             flex: 1;
             word-break: break-word;
+            color: #e0e0e0;
         }
         
         .context-line.matched {
-            background-color: #fff9c4;
+            background-color: #4a5c2a;
             font-weight: 600;
         }
         
@@ -248,93 +299,105 @@
         }
         
         .expand-btn {
-            padding: 6px 16px;
-            background-color: #2196F3;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
             transition: background-color 0.2s;
         }
         
         .expand-btn:hover {
-            background-color: #1976D2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
         }
         
         .expand-btn:disabled {
-            background-color: #ccc;
+            background: #404040;
             cursor: not-allowed;
+            transform: none;
         }
         
         .login-container {
-            max-width: 500px;
+            max-width: 400px;
             margin: 40px auto;
         }
         
         .login-header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            border-radius: 8px 8px 0 0;
+            text-align: center;
+            margin-bottom: 40px;
         }
-        
+
         .login-header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #888;
+            font-size: 14px;
         }
         
-        .login-card {
-            background: white;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 30px;
+        .login-card, .login-box {
+            background: #2d2d2d;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
         
-        .login-card .form-group {
-            margin-bottom: 15px;
+        .login-card .form-group,
+        .login-box .form-group {
+            margin-bottom: 24px;
         }
         
-        .login-card label {
+        .login-card label,
+        .login-box label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #34495e;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #fff;
         }
         
-        .login-card input {
+        .login-card input,
+        .login-box input {
             width: 100%;
         }
         
-        .login-card button {
+        .login-card button,
+        .login-box button {
             width: 100%;
         }
         
-        .login-error, .login-info {
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
+        .login-error, .error-message {
+            background: #ff4444;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
-        
-        .login-error {
-            background: #fee;
-            color: #c33;
-        }
-        
-        .login-info {
-            background: #e3f2fd;
-            color: #1565c0;
+
+        .login-info, .success-message {
+            background: #52c97b;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
         
         .error {
-            color: #d32f2f;
+            color: #ff4444;
             margin-top: 10px;
             font-size: 14px;
         }
         
         .success {
-            color: #2e7d32;
+            color: #52c97b;
             margin-top: 10px;
             font-size: 14px;
         }
@@ -343,24 +406,26 @@
             display: none;
         }
         
-        .logout-btn {
-            background-color: #e74c3c;
-            padding: 8px 16px;
-            font-size: 13px;
+        .logout-btn, .btn-danger {
+            background: #ff4444;
+            padding: 10px 16px;
+            font-size: 14px;
         }
         
-        .logout-btn:hover {
-            background-color: #c0392b;
+        .logout-btn:hover, .btn-danger:hover {
+            background: #cc0000;
+            box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
         }
         
-        .settings-btn {
-            background-color: #3498db;
-            padding: 8px 16px;
-            font-size: 13px;
+        .settings-btn, .btn-primary {
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
+            padding: 10px 16px;
+            font-size: 14px;
         }
         
-        .settings-btn:hover {
-            background-color: #2980b9;
+        .settings-btn:hover, .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
         }
         
         /* Modal styles */
@@ -372,7 +437,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.7);
         }
         
         .modal.visible {
@@ -382,20 +447,40 @@
         }
         
         .modal-content {
-            background-color: white;
-            border-radius: 8px;
+            background-color: #2d2d2d;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
             width: 90%;
             max-width: 600px;
-            max-height: 90vh;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #1a1a1a;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #4a9eff;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #357abd;
         }
         
         .modal-header {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
             color: white;
-            padding: 20px;
-            border-radius: 8px 8px 0 0;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -403,24 +488,27 @@
         
         .modal-header h2 {
             margin: 0;
-            font-size: 20px;
+            font-size: 24px;
+            font-weight: 600;
         }
         
         .close-btn {
             background: transparent;
             color: white;
             border: none;
-            font-size: 28px;
+            font-size: 32px;
             cursor: pointer;
             padding: 0;
             width: 30px;
             height: 30px;
             line-height: 1;
+            transition: all 0.3s ease;
         }
         
         .close-btn:hover {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.2);
             border-radius: 4px;
+            transform: none;
         }
         
         .modal-body {
@@ -430,7 +518,7 @@
         .settings-section {
             margin-bottom: 30px;
             padding-bottom: 30px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #404040;
         }
         
         .settings-section:last-child {
@@ -441,7 +529,7 @@
         
         .settings-section h3 {
             margin-bottom: 15px;
-            color: #2c3e50;
+            color: #fff;
             font-size: 18px;
         }
         
@@ -451,27 +539,29 @@
         }
         
         .qr-code-container img {
-            max-width: 300px;
-            border: 2px solid #ddd;
+            max-width: 200px;
+            border: 4px solid #404040;
             border-radius: 8px;
             padding: 10px;
             background: white;
         }
         
         .manual-entry {
-            background: #f5f5f5;
+            background: #1a1a1a;
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin: 15px 0;
             font-family: 'Courier New', monospace;
-            font-size: 16px;
+            font-size: 14px;
             text-align: center;
             word-break: break-all;
+            color: #4a9eff;
+            border: 1px solid #404040;
         }
         
         .status-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 6px 12px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
@@ -479,13 +569,13 @@
         }
         
         .status-enabled {
-            background: #c8e6c9;
-            color: #2e7d32;
+            background: #52c97b;
+            color: #fff;
         }
         
         .status-disabled {
-            background: #ffcdd2;
-            color: #c62828;
+            background: #ff4444;
+            color: #fff;
         }
         
         .button-group {
@@ -495,32 +585,23 @@
         }
         
         .button-secondary {
-            background-color: #95a5a6;
+            background: #404040;
         }
         
         .button-secondary:hover {
-            background-color: #7f8c8d;
-        }
-        
-        .button-danger {
-            background-color: #e74c3c;
-        }
-        
-        .button-danger:hover {
-            background-color: #c0392b;
+            background: #555;
         }
         
         .info-text {
-            color: #666;
+            color: #888;
             font-size: 14px;
             margin: 10px 0;
             line-height: 1.6;
         }
     
-        
         /* Statistics Dashboard */
         .stats-dashboard {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
             border-radius: 8px;
             padding: 25px;
             margin-bottom: 30px;
@@ -569,51 +650,155 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #52c97b;
+            color: #fff;
+        }
+
+        .alert-error {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .alert-info {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .alert-warning {
+            background: #ffa500;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-left {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Logout Confirmation Modal */
+        .logout-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-modal.visible {
+            display: flex;
+        }
+
+        .logout-modal-content {
+            background: #2d2d2d;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .logout-modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .logout-modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .logout-modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-modal-btn-ok {
+            background: #8db4e2;  /* Lighter blue like in your Network Monitor */
+            color: #fff;
+            border: none;
+        }
+
+        .logout-modal-btn-ok:hover {
+            background: #6fa3d9;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .logout-modal-btn-cancel {
+            background: #4a4a4a;
+            color: #e0e0e0;
+            border: 1px solid #666;
+        }
+
+        .logout-modal-btn-cancel:hover {
+            background: #5a5a5a;
+        }
+
+        .btn-icon {
+            background: #404040;
+            border: none;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+          /*  transition: all 0.3s ease; */
+        }
+
+        .btn-icon:hover {
+            background: #4a9eff;
+            transform: none;  /* ← Add this line */
+            box-shadow: none; /* ← Add this line too to remove shadow */            
+        } 
+                               
     </style>
 </head>
 <body>
-    <div id="loginForm" class="login-container">
-        <div class="login-header">
-            <h1>🔍 IRC Log Search - Login</h1>
-        </div>
-        <div class="login-card">
-            <div id="loginError" class="login-error hidden"></div>
-            <div id="loginInfo" class="login-info hidden"></div>
-            
-            <div id="credentialsStep">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter username" autocomplete="username">
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
-                </div>
-                
-                <button onclick="login()">Login</button>
-            </div>
-            
-            <div id="twoFactorStep" class="hidden">
-                <div class="form-group">
-                    <label for="totp_code">Enter 6-digit code from your authenticator app</label>
-                    <input type="text" id="totp_code" placeholder="000000" maxlength="6" pattern="\d{6}" autocomplete="one-time-code">
-                </div>
-                
-                <div class="button-group">
-                    <button onclick="verify2FA()">Verify</button>
-                    <button class="button-secondary" onclick="backToCredentials()">Back</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="mainApp" class="container hidden">
+    <div id="mainApp" class="container">
         <div class="main-header">
-            <h1>🔍 IRC Log Search</h1>
+            <div class="header-left">
+                <div class="lock-icon">🔍</div>
+                <h1>IRC Log Search</h1>
+            </div>
             <div class="header-buttons">
-                <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="btn-icon" onclick="openSettings()">⚙️ Settings</button>
+                <button class="btn-icon" onclick="logout()">🚪 Logout</button>
             </div>
         </div>
         <div class="main-content">
@@ -642,31 +827,31 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="network">Network *</label>
+                    <label class="form-label" for="network">Network *</label>
                     <select id="network" onchange="loadChannels()">
                         <option value="">Select a network...</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="channel">Channel (optional - leave blank to search all)</label>
+                    <label class="form-label" for="channel">Channel (optional - leave blank to search all)</label>
                     <select id="channel">
                         <option value="">All channels</option>
                     </select>
                 </div>
                 
                 <div class="form-group full-width">
-                    <label for="query">Search Query *</label>
+                    <label class="form-label" for="query">Search Query *</label>
                     <input type="text" id="query" placeholder="Enter search term...">
                 </div>
                 
                 <div class="form-group">
-                    <label for="startDate">Start Date (optional)</label>
+                    <label class="form-label" for="startDate">Start Date (optional)</label>
                     <input type="date" id="startDate">
                 </div>
                 
                 <div class="form-group">
-                    <label for="endDate">End Date (optional)</label>
+                    <label class="form-label" for="endDate">End Date (optional)</label>
                     <input type="date" id="endDate">
                 </div>
             </div>
@@ -687,37 +872,39 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Settings</h2>
+                <h2>⚙️ Settings</h2>
                 <button class="close-btn" onclick="closeSettings()">&times;</button>
             </div>
             <div class="modal-body">
+                <div id="settings-alert" style="display: none;"></div>
+
                 <!-- Change Password Section -->
                 <div class="settings-section">
-                    <h3>Change Password</h3>
+                    <h3>🔑 Change Password</h3>
                     <div id="passwordChangeMessage" class="hidden"></div>
                     
                     <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" autocomplete="current-password">
+                        <label class="form-label" for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" class="form-input" autocomplete="current-password">
                     </div>
                     
                     <div class="form-group">
-                        <label for="newPassword">New Password (min 8 characters)</label>
-                        <input type="password" id="newPassword" autocomplete="new-password">
+                        <label class="form-label" for="newPassword">New Password (min 8 characters)</label>
+                        <input type="password" id="newPassword" class="form-input" autocomplete="new-password">
                     </div>
                     
                     <div class="form-group">
-                        <label for="confirmPassword">Confirm New Password</label>
-                        <input type="password" id="confirmPassword" autocomplete="new-password">
+                        <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                        <input type="password" id="confirmPassword" class="form-input" autocomplete="new-password">
                     </div>
                     
-                    <button onclick="changePassword()">Change Password</button>
+                    <button class="btn-primary" onclick="changePassword()">Change Password</button>
                 </div>
                 
                 <!-- 2FA Section -->
                 <div class="settings-section">
                     <h3>
-                        Two-Factor Authentication (2FA)
+                        🔒 Two-Factor Authentication
                         <span id="2faStatusBadge" class="status-badge"></span>
                     </h3>
                     
@@ -726,7 +913,7 @@
                             Two-factor authentication adds an extra layer of security to your account. 
                             You'll need to enter a code from your authenticator app when logging in.
                         </p>
-                        <button onclick="setup2FA()">Enable 2FA</button>
+                        <button class="btn-primary" onclick="setup2FA()">Enable 2FA</button>
                     </div>
                     
                     <div id="2faSetupView" class="hidden">
@@ -746,13 +933,13 @@
                         <div class="manual-entry" id="manualEntryCode"></div>
                         
                         <div class="form-group">
-                            <label for="verificationCode">Enter the 6-digit code from your app to complete setup</label>
-                            <input type="text" id="verificationCode" placeholder="000000" maxlength="6" pattern="\d{6}">
+                            <label class="form-label" for="verificationCode">Enter the 6-digit code from your app to complete setup</label>
+                            <input type="text" id="verificationCode" class="form-input" placeholder="000000" maxlength="6" pattern="\d{6}">
                         </div>
                         
                         <div class="button-group">
-                            <button onclick="enable2FA()">Verify and Enable</button>
-                            <button class="button-secondary" onclick="cancel2FASetup()">Cancel</button>
+                            <button class="btn-primary" onclick="enable2FA()">Verify and Enable</button>
+                            <button class="btn button-secondary" onclick="cancel2FASetup()">Cancel</button>
                         </div>
                     </div>
                     
@@ -765,27 +952,25 @@
                         
                         <div id="2faDisableForm" class="hidden">
                             <div class="form-group">
-                                <label for="disablePassword">Enter your password to disable 2FA</label>
-                                <input type="password" id="disablePassword" autocomplete="current-password">
+                                <label class="form-label" for="disablePassword">Enter your password to disable 2FA</label>
+                                <input type="password" id="disablePassword" class="form-input" autocomplete="current-password">
                             </div>
                             <div class="button-group">
-                                <button class="button-danger" onclick="confirmDisable2FA()">Confirm Disable</button>
-                                <button class="button-secondary" onclick="cancelDisable2FA()">Cancel</button>
+                                <button class="btn-danger" onclick="confirmDisable2FA()">Confirm Disable</button>
+                                <button class="btn button-secondary" onclick="cancelDisable2FA()">Cancel</button>
                             </div>
                         </div>
                         
-                        <button id="disable2FABtn" class="button-danger" onclick="showDisable2FA()">Disable 2FA</button>
+                        <button id="disable2FABtn" class="btn-danger" onclick="showDisable2FA()">Disable 2FA</button>
                     </div>
                 </div>
-            </div>
+            </div>       
         </div>
     </div>
 
     <script>
         let contextCache = {};
         const EXPAND_LINES = 10;
-        let requires2FA = false;
-        
         // Check if already logged in
         fetch('/api/networks')
             .then(response => {
@@ -793,102 +978,44 @@
                     showMainApp();
                 }
             });
-        
-        function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorDiv = document.getElementById('loginError');
-            const infoDiv = document.getElementById('loginInfo');
-            
-            errorDiv.classList.add('hidden');
-            infoDiv.classList.add('hidden');
-            
-            fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMainApp();
-                } else if (data.requires_2fa) {
-                    requires2FA = true;
-                    document.getElementById('credentialsStep').classList.add('hidden');
-                    document.getElementById('twoFactorStep').classList.remove('hidden');
-                    infoDiv.textContent = data.message;
-                    infoDiv.classList.remove('hidden');
-                    document.getElementById('totp_code').focus();
-                } else {
-                    errorDiv.textContent = data.error || 'Login failed';
-                    errorDiv.classList.remove('hidden');
-                }
-            })
-            .catch(error => {
-                errorDiv.textContent = 'Network error';
-                errorDiv.classList.remove('hidden');
-            });
-        }
-        
-        function verify2FA() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const totp_code = document.getElementById('totp_code').value;
-            const errorDiv = document.getElementById('loginError');
-            
-            if (!/^\d{6}$/.test(totp_code)) {
-                errorDiv.textContent = 'Please enter a valid 6-digit code';
-                errorDiv.classList.remove('hidden');
+
+        // Logout function
+        async function logout() {
+            if (!confirm('Are you sure you want to logout?')) {
                 return;
             }
             
-            errorDiv.classList.add('hidden');
-            
-            fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, totp_code })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMainApp();
-                } else {
-                    errorDiv.textContent = data.error || 'Verification failed';
-                    errorDiv.classList.remove('hidden');
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/login';
                 }
-            })
-            .catch(error => {
-                errorDiv.textContent = 'Network error';
-                errorDiv.classList.remove('hidden');
-            });
-        }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                alert('Logout failed. Please try again.');
+            }
+        }            
         
-        function backToCredentials() {
-            document.getElementById('twoFactorStep').classList.add('hidden');
-            document.getElementById('credentialsStep').classList.remove('hidden');
-            document.getElementById('loginInfo').classList.add('hidden');
-            document.getElementById('totp_code').value = '';
-            requires2FA = false;
-        }
-        
-        function logout() {
+        function confirmLogout() {
+            document.getElementById('logoutModal').classList.remove('visible');
             fetch('/api/logout', { method: 'POST' })
                 .then(() => {
-                    document.getElementById('mainApp').classList.add('hidden');
-                    document.getElementById('loginForm').classList.remove('hidden');
-                    document.getElementById('username').value = '';
-                    document.getElementById('password').value = '';
-                    document.getElementById('totp_code').value = '';
-                    document.getElementById('loginError').classList.add('hidden');
-                    document.getElementById('loginInfo').classList.add('hidden');
-                    backToCredentials();
+                    window.location.href = '/login';
                 });
+        }
+
+        function cancelLogout() {
+            document.getElementById('logoutModal').classList.remove('visible');
         }
         
         function showMainApp() {
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
+            // Main app is shown by default
             loadNetworks();
             loadStats();
         }
@@ -911,6 +1038,17 @@
             document.getElementById('disablePassword').value = '';
         }
         
+        function showSettingsAlert(message, type = 'success') {
+            const alert = document.getElementById('settings-alert');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
         function changePassword() {
             const current = document.getElementById('currentPassword').value;
             const newPass = document.getElementById('newPassword').value;
@@ -1136,6 +1274,7 @@
                     });
                 });
         }
+
         function loadStats() {
             fetch('/api/stats')
                 .then(response => response.json())
@@ -1156,7 +1295,6 @@
                     console.error('Error loading stats:', error);
                 });
         }
-        
         
         function loadChannels() {
             const network = document.getElementById('network').value;
@@ -1385,7 +1523,22 @@
             document.getElementById('query')?.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') search();
             });
+
+            // Auto-focus username field on load
+            document.getElementById('username')?.focus();
         });
     </script>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="logout-modal">
+        <div class="logout-modal-content">
+            <div class="logout-modal-header">Are you sure you want to logout?</div>
+            <div class="logout-modal-buttons">
+                <button class="logout-modal-btn logout-modal-btn-ok" onclick="confirmLogout()">OK</button>
+                <button class="logout-modal-btn logout-modal-btn-cancel" onclick="cancelLogout()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

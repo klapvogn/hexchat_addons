@@ -25,8 +25,8 @@ from datetime import datetime
 from pysqlcipher3 import dbapi2 as sqlite
 
 # Configuration - should match app.py
-DB_PATH = '/home/xxxx/apps/znc_search/znc_logs.db'
-DB_KEY = 'xxxx'  # Must match app.py
+DB_PATH = '/path/to/znc_search/znc_logs.db'
+DB_KEY = 'secret_key'  # Must match app.py
 
 def get_db():
     """Get database connection with encryption"""
@@ -323,5 +323,4 @@ def main():
         user_info(args.username)
 
 if __name__ == '__main__':
-
     main()

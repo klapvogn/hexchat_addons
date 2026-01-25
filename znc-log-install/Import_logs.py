@@ -19,9 +19,9 @@ from pysqlcipher3 import dbapi2 as sqlite
 import argparse
 
 # Configuration - should match app.py
-ZNC_BASE_PATH = '/home/xxxx/.znc/users/xxxx/networks'
-DB_PATH = '/home/xxxx/apps/znc_search/znc_logs.db'
-DB_KEY = 'xxxx'  # Must match app.py
+ZNC_BASE_PATH = '/path/to/.znc/users/username/networks'
+DB_PATH = '/path/to/znc_search/znc_logs.db'
+DB_KEY = 'secret_key'  # Must match app.py
 
 # Network display name mapping (should match app.py)
 NETWORK_NAMES = {}
@@ -332,5 +332,4 @@ def main():
     print("\nDatabase encrypted and ready to use.")
 
 if __name__ == '__main__':
-
     main()

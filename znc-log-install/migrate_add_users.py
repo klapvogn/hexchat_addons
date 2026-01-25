@@ -17,8 +17,8 @@ import hashlib
 from pysqlcipher3 import dbapi2 as sqlite
 
 # Configuration - should match app.py
-DB_PATH = '/home/xxxx/apps/znc_search/znc_logs.db'
-DB_KEY = 'xxxx'
+DB_PATH = '/path/to/znc_search/znc_logs.db'
+DB_KEY = 'secret_key'
 
 def hash_password(password):
     """Hash password using SHA256"""
@@ -120,5 +120,4 @@ def migrate():
         sys.exit(1)
 
 if __name__ == '__main__':
-
     migrate()
